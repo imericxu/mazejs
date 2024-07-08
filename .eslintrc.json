@@ -18,5 +18,8 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "only-warn"]
+  "plugins": ["@typescript-eslint", "only-warn"],
+  "rules": {
+    "react-hooks/exhaustive-deps": "off"
+  }
 }
