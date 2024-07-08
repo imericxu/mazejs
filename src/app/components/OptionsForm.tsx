@@ -1,109 +1,119 @@
-import { type MazeOptions, MazeRenderer } from "@/lib/MazeRenderer";
-import { type ChangeEvent, type ReactElement, useCallback } from "react";
+import { type MazeSettings, MazeRenderer } from "@/lib/MazeRenderer";
+import { produce } from "immer";
+import { type ReactElement } from "react";
+import {
+  Button,
+  Form,
+  Input,
+  Label,
+  Switch,
+  TextField,
+} from "react-aria-components";
+import { FormActionType } from "../page";
+import { twMerge } from "tailwind-merge";
 
 export interface OptionsFormProps {
-  mazeOptions: MazeOptions;
-  setMazeOptions: (options: MazeOptions) => void;
-  onGenerate: () => void;
-  onSolve: () => void;
-  onClear: () => void;
+  mazeOptions: MazeSettings;
+  setMazeOptions: (settings: MazeSettings) => void;
+  onAction: (action: FormActionType) => void;
+  className?: string;
 }
 
 export default function OptionsForm({
-  mazeOptions,
+  mazeOptions: mazeSettings,
   setMazeOptions,
-  onGenerate,
-  onSolve,
-  onClear,
+  onAction,
+  className,
 }: OptionsFormProps): ReactElement {
-  const onDimensionChange = useCallback(
-    (
-      e: ChangeEvent<HTMLInputElement>,
-      key: keyof MazeOptions["dimensions"],
-    ) => {
-      const strValue: string = e.target.value;
-      const value: number | undefined = strValue
-        ? parseInt(strValue)
-        : undefined;
-
-      setMazeOptions({
-        ...mazeOptions,
-        dimensions: {
-          ...mazeOptions.dimensions,
-          [key]: value,
-        },
-      });
-    },
-    [mazeOptions, setMazeOptions],
-  );
-
   return (
-    <form
-      className="flex flex-nowrap gap-2"
+    <Form
       onSubmit={(e) => {
         e.preventDefault();
       }}
+      className={twMerge(
+        "mx-auto flex w-fit gap-2 rounded-full border border-slate-50/80 bg-gradient-to-b from-slate-100/50 via-slate-400/50 via-20% px-12 py-2 shadow-lg",
+        className,
+      )}
     >
       {/* Rows */}
-      <label className="flex flex-col">
-        <span className="text-sm">Rows</span>
-        <input
+      <TextField className="flex flex-col">
+        <Label className="ms-3 text-sm text-slate-900">Rows</Label>
+        <Input
           type="number"
-          min={3}
           step={1}
-          value={mazeOptions.dimensions.rows ?? ""}
-          placeholder={MazeRenderer.DEFAULT_DIMENSIONS.rows.toString()}
+          min={MazeRenderer.SIZE_RANGE.min}
+          max={MazeRenderer.SIZE_RANGE.max}
+          value={mazeSettings.dimensions.rows}
+          placeholder={MazeRenderer.DEFAULTS.dimensions.rows.toString()}
           onChange={(e) => {
-            onDimensionChange(e, "rows");
+            setMazeOptions(
+              produce(mazeSettings, (draft) => {
+                draft.dimensions.rows = parseInt(e.target.value);
+              }),
+            );
           }}
-          className="w-16 px-1 py-px"
+          className="h-8 w-16 rounded-full border border-slate-50/80 bg-slate-300/20 bg-gradient-to-b from-slate-50/50 via-slate-500/20 via-20% to-70% px-3 shadow-md"
         />
-      </label>
+      </TextField>
 
       {/* Cols */}
-      <label className="flex flex-col">
-        <span className="text-sm">Cols</span>
-        <input
+      <TextField className="flex flex-col">
+        <Label className="ms-3 text-sm text-slate-900">Cols</Label>
+        <Input
           type="number"
-          min={3}
           step={1}
-          value={mazeOptions.dimensions.cols ?? ""}
-          placeholder={MazeRenderer.DEFAULT_DIMENSIONS.cols.toString()}
+          min={MazeRenderer.SIZE_RANGE.min}
+          max={MazeRenderer.SIZE_RANGE.max}
+          value={mazeSettings.dimensions.cols}
+          placeholder={MazeRenderer.DEFAULTS.dimensions.cols.toString()}
           onChange={(e) => {
-            onDimensionChange(e, "cols");
+            setMazeOptions(
+              produce(mazeSettings, (draft) => {
+                draft.dimensions.cols = parseInt(e.target.value);
+              }),
+            );
           }}
-          className="w-16 px-1 py-px"
+          className="h-8 w-16 rounded-full border border-slate-50/80 bg-slate-300/20 bg-gradient-to-b from-slate-50/50 via-slate-500/20 via-20% to-70% px-3 shadow-md"
         />
-      </label>
+      </TextField>
 
-      {/* Animate Toggle */}
-      <label className="h-min-full flex flex-col items-start">
-        <span className="text-sm">Animate</span>
-        <input
-          type="checkbox"
-          checked={mazeOptions.doAnimateGenerating}
-          onChange={(e) => {
-            setMazeOptions({
-              ...mazeOptions,
-              doAnimateGenerating: e.target.checked,
-            });
-          }}
-          className="grow"
-        />
-      </label>
+      {/* Animate Generating Switch */}
+      <Switch
+        isSelected={mazeSettings.doAnimateGenerating}
+        onChange={(isSelected) => {
+          setMazeOptions({
+            ...mazeSettings,
+            doAnimateGenerating: isSelected,
+          });
+        }}
+        className="group flex flex-col items-start"
+      >
+        <Label className="text-sm">Animate</Label>
+        {/* Actual Switch */}
+        <div className="relative h-8 w-14">
+          {/* Circle */}
+          <div className="ml-[3px] mt-[3px] h-[26px] w-[26px] rounded-full border-2 border-slate-50/80 bg-blue-500/90 shadow transition-all group-selected:ml-[28px]"></div>
+          {/* Track */}
+          <div className="absolute inset-0 rounded-full border border-slate-50/80 bg-slate-300/20 bg-gradient-to-b from-slate-50/50 via-slate-500/20 via-20% to-70% shadow-md transition group-selected:bg-blue-500/30"></div>
+        </div>
+      </Switch>
 
-      <button
-        onClick={onGenerate}
-        className="self-end bg-green-800 px-4 py-2 text-zinc-100"
+      <Button
+        onPress={() => {
+          onAction("generate");
+        }}
+        className="h-8 self-end rounded-full border border-slate-50/80 bg-blue-500/30 bg-gradient-to-b from-slate-50/50 via-slate-500/20 via-20% to-70% px-4 shadow-md"
       >
         Generate
-      </button>
-      <button
-        onClick={onClear}
-        className="self-end bg-pink-800 px-4 py-2 text-zinc-100"
+      </Button>
+      <Button
+        onPress={() => {
+          onAction("clear");
+        }}
+        className="h-8 self-end rounded-full border border-slate-50/80 bg-blue-500/20 bg-gradient-to-b from-slate-50/50 via-slate-500/20 via-20% to-70% px-4 shadow-md"
       >
         Clear
-      </button>
-    </form>
+      </Button>
+    </Form>
   );
 }

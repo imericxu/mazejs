@@ -11,6 +11,9 @@ import { Wilsons } from "./algorithms/generating/Wilsons";
 import { Idx2d, Point as Coord } from "./twoDimens";
 import { AnimationPromise } from "./AnimationPromise";
 import { Mutex } from "async-mutex";
+import colors from "tailwindcss/colors";
+
+export type MazeZoomLevel = 1 | 0.5 | 0.25;
 
 export interface MazeDimensions {
   rows: number;
@@ -21,10 +24,11 @@ export interface MazeDimensions {
    * E.g., 0.5 means a cell is half the width of a wall.
    */
   cellWallRatio: number;
+  zoomLevel: MazeZoomLevel;
 }
 
-export interface MazeOptions {
-  dimensions: Partial<MazeDimensions>;
+export interface MazeSettings {
+  dimensions: MazeDimensions;
   generatingAlgorithm?: GeneratingAlgorithm;
   doAnimateGenerating: boolean;
   solvingAlgorithm?: SolvingAlgorithm;
@@ -32,20 +36,34 @@ export interface MazeOptions {
 }
 
 export class MazeRenderer {
-  static DEFAULT_DIMENSIONS: MazeDimensions = {
-    rows: 20,
-    cols: 20,
-    cellWallRatio: 4.0,
-  };
-  static Color = {
-    cellEmpty: "hsl(208, 49%, 19%)",
-    cellPartial: "hsl(215, 72%, 72%)",
-    cellSolid: "hsl(0, 0%, 95%)",
+  /** Range of rows/cols allowed. */
+  static SIZE_RANGE = {
+    min: 3,
+    max: 800,
   } as const;
+
+  /** Default settings. */
+  static DEFAULTS: MazeSettings = {
+    dimensions: {
+      rows: 20,
+      cols: 20,
+      cellWallRatio: 4.0,
+      zoomLevel: 1,
+    },
+    doAnimateGenerating: true,
+    doAnimateSolving: true,
+  } as const;
+
+  static Color = {
+    cellEmpty: colors.blue[500],
+    cellPartial: colors.blue[300],
+    cellSolid: colors.blue[50],
+  } as const;
+
   /** Size of cell + wall. */
   private static FULL_SIZE: number = 12;
 
-  set dimensions(value: Partial<MazeDimensions>) {
+  set dimensions(value: MazeDimensions) {
     this._dimensions = value;
     this.wallSize = this.calcWallSize();
     this.cellSize = MazeRenderer.FULL_SIZE - this.wallSize;
@@ -62,7 +80,7 @@ export class MazeRenderer {
   private maze: MazeCell[][] | null = null;
   private wallSize: number;
   private cellSize: number;
-  private _dimensions: Partial<MazeDimensions> = {};
+  private _dimensions: MazeDimensions = MazeRenderer.DEFAULTS.dimensions;
 
   private get ctx(): CanvasRenderingContext2D {
     return this.useHiddenCanvas ? this.hiddenCtx : this._ctx;
@@ -87,18 +105,15 @@ export class MazeRenderer {
   }
 
   private get rows(): number {
-    return this._dimensions.rows ?? MazeRenderer.DEFAULT_DIMENSIONS.rows;
+    return this._dimensions.rows;
   }
 
   private get cols(): number {
-    return this._dimensions.cols ?? MazeRenderer.DEFAULT_DIMENSIONS.cols;
+    return this._dimensions.cols;
   }
 
   private get cellWallRatio(): number {
-    return (
-      this._dimensions.cellWallRatio ??
-      MazeRenderer.DEFAULT_DIMENSIONS.cellWallRatio
-    );
+    return this._dimensions.cellWallRatio;
   }
 
   constructor(ctx: CanvasRenderingContext2D) {
@@ -116,14 +131,14 @@ export class MazeRenderer {
     this.hiddenCtx = canvas.getContext("2d", { willReadFrequently: true })!;
   }
 
-  async generateMaze(options: MazeOptions): Promise<void> {
+  async generateMaze(options: MazeSettings): Promise<void> {
     if (!deepEqual(this._dimensions, options.dimensions)) {
       this.dimensions = options.dimensions;
       await this.resize();
     }
 
     await this.stopMazeAnimation();
-    const alg = new Prims({ rows: this.rows, cols: this.cols });
+    const alg = new Wilsons({ rows: this.rows, cols: this.cols });
     this.maze = alg.maze;
 
     if (options.doAnimateGenerating) {
@@ -189,7 +204,7 @@ export class MazeRenderer {
     this.isCanvasEmpty = false;
   }
 
-  async solveMaze(options: MazeOptions): Promise<void> {}
+  async solveMaze(options: MazeSettings): Promise<void> {}
 
   /**
    * Empties the canvas and stops all animations.
