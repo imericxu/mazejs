@@ -85,3 +85,29 @@ export function deepEqual<T>(obj1: T, obj2: T): boolean {
 
   return true;
 }
+
+export function getIntFromForm(
+  formEvent: Readonly<FormData>,
+  key: string,
+): number | null {
+  const value = formEvent.get(key);
+  if (value === null) return null;
+
+  const intValue = parseInt(value.toString());
+  if (isNaN(intValue)) return null;
+
+  return intValue;
+}
+
+export function getFloatFromForm(
+  formEvent: Readonly<FormData>,
+  key: string,
+): number | null {
+  const value = formEvent.get(key);
+  if (value === null) return null;
+
+  const floatValue = parseFloat(value.toString());
+  if (isNaN(floatValue)) return null;
+
+  return floatValue;
+}

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Hind } from "next/font/google";
+import { Lato } from "next/font/google";
 import { type ReactElement, type ReactNode } from "react";
 import "./globals.css";
 import { twMerge } from "tailwind-merge";
 
-const poppinsFont = Hind({
-  weight: ["300", "400", "600"],
+const latoFont = Lato({
+  weight: ["300", "400", "700"],
   subsets: ["latin"],
 });
 
@@ -23,8 +23,8 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={twMerge(
-          poppinsFont.className,
-          "min-h-full bg-gradient-to-b from-blue-100 to-blue-300 bg-fixed text-slate-950/85",
+          latoFont.className,
+          "min-h-full bg-gradient-to-b from-blue-100 to-blue-300 bg-fixed text-slate-900",
         )}
       >
         {children}
