@@ -1,18 +1,18 @@
 import { Mutex } from "async-mutex";
+import { match } from "ts-pattern";
 import {
   type GenerationAlgorithm,
   type SolveAlgorithm,
 } from "./algorithms/algorithmTypes";
-import { AnimationPromise } from "./AnimationPromise";
-import { MazeCell } from "./MazeCell";
-import MazeDrawer from "./MazeDrawer";
-import { RectSize } from "./twoDimens";
-import { clamp, deepEqual } from "./utils";
-import { BFS } from "./algorithms/solving/BFS";
-import { match } from "ts-pattern";
 import { MazeGenerator } from "./algorithms/generating/MazeGenerator";
-import { MazeSolver } from "./algorithms/solving/MazeSolver";
 import { Wilsons } from "./algorithms/generating/Wilsons";
+import { BFS } from "./algorithms/solving/BFS";
+import { MazeSolver } from "./algorithms/solving/MazeSolver";
+import { AnimationPromise } from "./AnimationPromise";
+import { type MazeCell } from "./MazeCell";
+import MazeDrawer from "./MazeDrawer";
+import { type RectSize } from "./twoDimens";
+import { clamp, deepEqual } from "./utils";
 
 export type MazeEvent = "generate" | "solve";
 

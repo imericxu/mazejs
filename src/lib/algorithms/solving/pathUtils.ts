@@ -1,4 +1,4 @@
-import { MazeCell } from "@/lib/MazeCell";
+import { type MazeCell } from "@/lib/MazeCell";
 
 export function buildPath(
   cameFrom: Map<MazeCell, MazeCell>,

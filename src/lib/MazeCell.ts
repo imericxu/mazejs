@@ -1,4 +1,4 @@
-import { Idx2d } from "./twoDimens";
+import { type Idx2d } from "./twoDimens";
 
 export type CellState = "empty" | "partial" | "solid";
 

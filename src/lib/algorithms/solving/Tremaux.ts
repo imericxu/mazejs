@@ -1,6 +1,6 @@
-import { MazeCell } from "@/lib/MazeCell";
-import { MazeSolver } from "./MazeSolver";
+import { type MazeCell } from "@/lib/MazeCell";
 import { randomFromArray } from "@/lib/utils";
+import { MazeSolver } from "./MazeSolver";
 
 export class Tremaux extends MazeSolver {
   protected _step(): [boolean, Readonly<MazeCell>[]] {

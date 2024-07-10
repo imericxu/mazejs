@@ -1,5 +1,6 @@
 "use client";
-import { MazeSettings, MazeController } from "@/lib/MazeController";
+import { MazeController, type MazeSettings } from "@/lib/MazeController";
+import { type RectSize } from "@/lib/twoDimens";
 import {
   useCallback,
   useEffect,
@@ -7,10 +8,9 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import OptionsForm from "./components/OptionsForm";
-import { match } from "ts-pattern";
 import { Label, Radio, RadioGroup } from "react-aria-components";
-import { RectSize } from "@/lib/twoDimens";
+import { match } from "ts-pattern";
+import OptionsForm from "./components/OptionsForm";
 
 export type FormActionType = "generate" | "solve" | "clear";
 

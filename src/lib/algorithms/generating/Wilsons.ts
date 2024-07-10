@@ -1,4 +1,4 @@
-import { MazeCell } from "@/lib/MazeCell";
+import { type MazeCell } from "@/lib/MazeCell";
 import { MazeGenerator } from "./MazeGenerator";
 import { randomFromArray, randomFromSet } from "@/lib/utils";
 import { match } from "ts-pattern";

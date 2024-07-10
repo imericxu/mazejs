@@ -1,3 +1,4 @@
+import { type FormActionType } from "@/app/page";
 import { MazeController, type MazeSettings } from "@/lib/MazeController";
 import { getFloatFromForm, getIntFromForm } from "@/lib/utils";
 import { useCallback, useRef, type ReactElement } from "react";
@@ -11,7 +12,6 @@ import {
   TextField,
 } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
-import { FormActionType } from "../page";
 
 export interface OptionsFormProps {
   onAction: (action: FormActionType, settings: MazeSettings) => void;

@@ -1,5 +1,5 @@
 import { MazeCell } from "@/lib/MazeCell";
-import { GridSize } from "@/lib/twoDimens";
+import { type GridSize } from "@/lib/twoDimens";
 import { Algorithm } from "../Algorithm";
 
 export abstract class MazeGenerator extends Algorithm {

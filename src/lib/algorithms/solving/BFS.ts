@@ -1,4 +1,4 @@
-import { MazeCell } from "@/lib/MazeCell";
+import { type MazeCell } from "@/lib/MazeCell";
 import { MazeSolver } from "./MazeSolver";
 import { Deque } from "@datastructures-js/deque";
 import { buildPath } from "./pathUtils";

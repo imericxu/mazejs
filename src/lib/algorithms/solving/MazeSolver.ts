@@ -1,4 +1,4 @@
-import { MazeCell } from "@/lib/MazeCell";
+import { type MazeCell } from "@/lib/MazeCell";
 import { Algorithm } from "../Algorithm";
 
 export abstract class MazeSolver extends Algorithm {
