@@ -26,6 +26,9 @@ export default class MazeDrawer {
   // Fields
   /////////////////////////////////////
 
+  /** Whether to use the hidden canvas rendering context. */
+  public useHiddenCtx: boolean = false;
+
   /** Dimensions of the maze. */
   private gridSize: Readonly<GridSize>;
   /** Ratio of cell width to vertical wall width. */
@@ -37,8 +40,6 @@ export default class MazeDrawer {
   private visibleCtx: CanvasRenderingContext2D;
   /** The hidden canvas rendering context for offscreen rendering. */
   private hiddenCtx: OffscreenCanvasRenderingContext2D;
-  /** Whether to use the hidden canvas rendering context. */
-  private useHiddenCtx: boolean = false;
 
   private sweepAnimations = new Set<AnimationPromise>();
 
@@ -61,13 +62,16 @@ export default class MazeDrawer {
     this.visibleCtx = ctx;
     const hiddenCanvas = document.createElement("canvas");
     this.hiddenCtx = match(
-      hiddenCanvas.transferControlToOffscreen().getContext("2d"),
+      hiddenCanvas
+        .transferControlToOffscreen()
+        .getContext("2d", { willReadFrequently: true }),
     )
       .with(null, () => {
         throw new Error("Failed to create offscreen canvas.");
       })
       .otherwise((ctx) => ctx);
     this.gridSize = initialGridSize;
+    this.resize(this.gridSize);
   }
 
   /////////////////////////////////////
@@ -131,11 +135,13 @@ export default class MazeDrawer {
 
   /** Updates the renderer and canvas with the new size. */
   public resize(size: Readonly<GridSize>): void {
+    this.animateFloodFill(null);
     this.gridSize = size;
     this.updateCanvasSize();
     this.setContainerSize({ width: this.width, height: this.height });
     this.visibleCtx.canvas.style.width = `${this.width}px`;
     this.visibleCtx.canvas.style.height = `${this.height}px`;
+    this.fillWithWall();
   }
 
   public zoomTo(
@@ -153,12 +159,57 @@ export default class MazeDrawer {
 
   /** Returns a promise that resolves when the animations are done. */
   public async waitForSweepAnimations(): Promise<void> {
-    await Promise.all(this.sweepAnimations);
+    await Promise.all(Array.from(this.sweepAnimations).map((a) => a.promise));
   }
 
   /** Cancels all sweep animations. */
   public stopSweepAnimations(): void {
     this.sweepAnimations.forEach((animation) => animation.cancel());
+  }
+
+  public fillWithWall(): void {
+    this.animateDoubleFloodFill(null, COLOR.empty);
+  }
+
+  /**
+   * Double sweep the canvas from left to right with the hidden canvas and the
+   * wall/empty color.
+   * @param durationMs Duration of the animation in milliseconds.
+   */
+  public animateCanvasCopyFill(
+    durationMs: number = 400,
+    delayMs: number = 100,
+  ): void {
+    let drawnWidth = 0;
+    const image: ImageData = this.hiddenCtx.getImageData(
+      0,
+      0,
+      this.width,
+      this.height,
+    );
+    const animation = new AnimationPromise(
+      (_, timeSinceStartMs: number) => {
+        const colorWidth: number = Math.round(
+          easeOutQuad(timeSinceStartMs, durationMs - delayMs, 0, this.width),
+        );
+        const imageWidth: number = Math.round(
+          easeOutQuad(timeSinceStartMs, durationMs, 0, this.width),
+        );
+
+        this.ctx.fillStyle = COLOR.empty;
+        this.ctx.fillRect(0, 0, colorWidth, this.height);
+
+        this.ctx.putImageData(image, 0, 0, 0, 0, imageWidth, this.height);
+
+        drawnWidth = imageWidth;
+      },
+      () => drawnWidth === this.width,
+    );
+    this.sweepAnimations.add(animation);
+    animation.start();
+    animation.promise.then(() => {
+      this.sweepAnimations.delete(animation);
+    });
   }
 
   /**
@@ -320,47 +371,6 @@ export default class MazeDrawer {
         }
 
         drawnWidth = drawWidth2;
-      },
-      () => drawnWidth === this.width,
-    );
-    this.sweepAnimations.add(animation);
-    animation.start();
-    animation.promise.then(() => {
-      this.sweepAnimations.delete(animation);
-    });
-  }
-
-  /**
-   * Double sweep the canvas from left to right with the hidden canvas and the
-   * wall/empty color.
-   * @param durationMs Duration of the animation in milliseconds.
-   */
-  private animateCanvasCopyFill(
-    durationMs: number = 400,
-    delayMs: number = 100,
-  ): void {
-    let drawnWidth = 0;
-    const image: ImageData = this.hiddenCtx.getImageData(
-      0,
-      0,
-      this.width,
-      this.height,
-    );
-    const animation = new AnimationPromise(
-      (_, timeSinceStartMs: number) => {
-        const colorWidth: number = Math.round(
-          easeOutQuad(timeSinceStartMs, durationMs - delayMs, 0, this.width),
-        );
-        const imageWidth: number = Math.round(
-          easeOutQuad(timeSinceStartMs, durationMs, 0, this.width),
-        );
-
-        this.ctx.fillStyle = COLOR.empty;
-        this.ctx.fillRect(0, 0, colorWidth, this.height);
-
-        this.ctx.putImageData(image, 0, 0, 0, 0, imageWidth, this.height);
-
-        drawnWidth = imageWidth;
       },
       () => drawnWidth === this.width,
     );

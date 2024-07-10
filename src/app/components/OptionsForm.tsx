@@ -1,4 +1,4 @@
-import { MazeRenderer, type MazeSettings } from "@/lib/MazeController";
+import { MazeController, type MazeSettings } from "@/lib/MazeController";
 import { getFloatFromForm, getIntFromForm } from "@/lib/utils";
 import { useCallback, useRef, type ReactElement } from "react";
 import {
@@ -33,13 +33,13 @@ export default function OptionsForm({
       const formData = new FormData(formRef.current);
       const rows: number =
         getIntFromForm(formData, "rows") ??
-        MazeRenderer.DEFAULTS.dimensions.rows;
+        MazeController.DEFAULTS.dimensions.rows;
       const cols: number =
         getIntFromForm(formData, "cols") ??
-        MazeRenderer.DEFAULTS.dimensions.cols;
+        MazeController.DEFAULTS.dimensions.cols;
       const cellWallRatio: number =
         getFloatFromForm(formData, "cellWallRatio") ??
-        MazeRenderer.DEFAULTS.dimensions.cellWallRatio;
+        MazeController.DEFAULTS.dimensions.cellWallRatio;
       const doAnimateGenerating: boolean =
         formData.get("doAnimateGeneration") === "on";
       const doAnimateSolving: boolean =
@@ -81,9 +81,9 @@ export default function OptionsForm({
               name="rows"
               type="number"
               step={1}
-              min={MazeRenderer.DIMS_RANGE.minSize}
-              max={MazeRenderer.DIMS_RANGE.maxSize}
-              placeholder={MazeRenderer.DEFAULTS.dimensions.rows.toString()}
+              min={MazeController.DIMS_RANGE.minSize}
+              max={MazeController.DIMS_RANGE.maxSize}
+              placeholder={MazeController.DEFAULTS.dimensions.rows.toString()}
               autoComplete="off"
               className="remove-input-arrows h-full w-full bg-transparent px-3"
             />
@@ -103,9 +103,9 @@ export default function OptionsForm({
               name="cols"
               type="number"
               step={1}
-              min={MazeRenderer.DIMS_RANGE.minSize}
-              max={MazeRenderer.DIMS_RANGE.maxSize}
-              placeholder={MazeRenderer.DEFAULTS.dimensions.cols.toString()}
+              min={MazeController.DIMS_RANGE.minSize}
+              max={MazeController.DIMS_RANGE.maxSize}
+              placeholder={MazeController.DEFAULTS.dimensions.cols.toString()}
               autoComplete="off"
               className="remove-input-arrows h-full w-full bg-transparent px-3"
             />
@@ -124,10 +124,10 @@ export default function OptionsForm({
             <Input
               name="cellWallRatio"
               type="number"
-              min={MazeRenderer.DIMS_RANGE.minRatio}
-              max={MazeRenderer.DIMS_RANGE.maxRatio}
+              min={MazeController.DIMS_RANGE.minRatio}
+              max={MazeController.DIMS_RANGE.maxRatio}
               step={0.1}
-              placeholder={MazeRenderer.DEFAULTS.dimensions.cellWallRatio.toString()}
+              placeholder={MazeController.DEFAULTS.dimensions.cellWallRatio.toString()}
               autoComplete="off"
               className="remove-input-arrows h-full w-full bg-transparent px-3"
             />

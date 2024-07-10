@@ -1,5 +1,5 @@
 "use client";
-import { MazeSettings, MazeRenderer } from "@/lib/MazeController";
+import { MazeSettings, MazeController } from "@/lib/MazeController";
 import {
   useCallback,
   useEffect,
@@ -10,39 +10,47 @@ import {
 import OptionsForm from "./components/OptionsForm";
 import { match } from "ts-pattern";
 import { Label, Radio, RadioGroup } from "react-aria-components";
+import { RectSize } from "@/lib/twoDimens";
 
 export type FormActionType = "generate" | "solve" | "clear";
 
 export default function Home(): ReactElement {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [mazeRenderer, setMazeRenderer] = useState<MazeRenderer | null>(null);
+  const [mazeController, setMazeController] = useState<MazeController | null>(
+    null,
+  );
 
   useEffect(() => {
     if (canvasRef.current === null) return;
     const ctx = canvasRef.current.getContext("2d");
     if (ctx === null) return;
-    setMazeRenderer((prev) => {
+    setMazeController((prev) => {
       if (prev !== null) return prev;
-      return new MazeRenderer(ctx);
+      return new MazeController(ctx, (size: Readonly<RectSize>) => {
+        if (containerRef.current === null) return;
+        containerRef.current.style.width = `${size.width}px`;
+        containerRef.current.style.height = `${size.height}px`;
+      });
     });
   }, []);
 
   const onAction = useCallback(
     (action: FormActionType, settings: MazeSettings) => {
-      if (mazeRenderer === null) return;
+      if (mazeController === null) return;
       match(action)
         .with("generate", () => {
-          mazeRenderer.generate(settings);
+          mazeController.generate(settings);
         })
         .with("solve", () => {
-          mazeRenderer.solve(settings);
+          mazeController.solve(settings);
         })
         .with("clear", () => {
-          mazeRenderer.clear();
+          mazeController.clear();
         })
         .exhaustive();
     },
-    [mazeRenderer],
+    [mazeController],
   );
 
   return (
@@ -77,8 +85,11 @@ export default function Home(): ReactElement {
       </RadioGroup>
 
       <div className="w-screen overflow-x-scroll p-2">
-        <div className="glass-surface mx-auto h-fit w-fit rounded-2xl p-5">
-          <canvas ref={canvasRef}>
+        <div
+          ref={containerRef}
+          className="glass-surface mx-auto box-content h-0 w-0 rounded-2xl p-5 transition-all"
+        >
+          <canvas ref={canvasRef} className="h-0 w-0 transition-all">
             Your browser doesn&lsquo;t support HTML Canvas.
           </canvas>
         </div>
