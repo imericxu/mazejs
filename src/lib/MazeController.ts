@@ -8,7 +8,7 @@ import { MazeCell } from "./MazeCell";
 import MazeDrawer from "./MazeDrawer";
 import { RectSize } from "./twoDimens";
 import { clamp, deepEqual } from "./utils";
-import { Tremaux } from "./algorithms/solving/Tremaux";
+import { BFS } from "./algorithms/solving/BFS";
 import { match } from "ts-pattern";
 import { MazeGenerator } from "./algorithms/generating/MazeGenerator";
 import { MazeSolver } from "./algorithms/solving/MazeSolver";
@@ -165,7 +165,7 @@ export class MazeController {
 
     const [start, end] = this.randomStartEnd();
     this.drawer.startEnd = [start, end];
-    const alg: MazeSolver = new Tremaux(this.maze, start, end);
+    const alg: MazeSolver = new BFS(this.maze, start, end);
 
     if (settings.doAnimateSolving) {
       if (this.shouldSweep) {
