@@ -1,4 +1,4 @@
-import { MazeRenderer, type MazeSettings } from "@/lib/MazeRenderer";
+import { MazeRenderer, type MazeSettings } from "@/lib/MazeController";
 import { getFloatFromForm, getIntFromForm } from "@/lib/utils";
 import { useCallback, useRef, type ReactElement } from "react";
 import {
@@ -40,9 +40,6 @@ export default function OptionsForm({
       const cellWallRatio: number =
         getFloatFromForm(formData, "cellWallRatio") ??
         MazeRenderer.DEFAULTS.dimensions.cellWallRatio;
-      const zoomLevel: number =
-        getFloatFromForm(formData, "zoom") ??
-        MazeRenderer.DEFAULTS.dimensions.zoomLevel;
       const doAnimateGenerating: boolean =
         formData.get("doAnimateGeneration") === "on";
       const doAnimateSolving: boolean =
@@ -53,7 +50,6 @@ export default function OptionsForm({
           rows,
           cols,
           cellWallRatio,
-          zoomLevel,
         },
         doAnimateGenerating,
         doAnimateSolving,
@@ -196,33 +192,6 @@ export default function OptionsForm({
           Clear
         </Button>
       </div>
-
-      {/* Zoom settings island */}
-      <RadioGroup
-        name="zoom"
-        defaultValue="1"
-        className="flex items-center gap-2 text-sm"
-      >
-        <Label>Zoom</Label>
-        <Radio
-          value="0.25"
-          className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
-        >
-          1/4
-        </Radio>
-        <Radio
-          value="0.5"
-          className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
-        >
-          1/2
-        </Radio>
-        <Radio
-          value="1"
-          className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
-        >
-          1
-        </Radio>
-      </RadioGroup>
     </Form>
   );
 }

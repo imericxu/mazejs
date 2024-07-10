@@ -15,7 +15,7 @@ export interface GridSize {
 }
 
 /** Represents a two-dimensional point. */
-export interface Point {
+export interface Coord {
   x: number;
   y: number;
 }

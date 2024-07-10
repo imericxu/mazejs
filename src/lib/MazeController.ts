@@ -1,14 +1,14 @@
 import { match } from "ts-pattern";
 import {
-  type GeneratingAlgorithm,
-  type SolvingAlgorithm,
+  type GenerationAlgorithm,
+  type SolveAlgorithm,
 } from "./algorithms/algorithmTypes";
 import { Backtracking } from "./algorithms/generating/Backtracking";
 import { Prims } from "./algorithms/generating/Prims";
 import { MazeCell } from "./MazeCell";
 import { clamp, deepEqual, Direction, easeOutQuad } from "./utils";
 import { Wilsons } from "./algorithms/generating/Wilsons";
-import { Idx2d, Point as Coord } from "./twoDimens";
+import { Idx2d, Coord } from "./twoDimens";
 import { AnimationPromise } from "./AnimationPromise";
 import { Mutex } from "async-mutex";
 import colors from "tailwindcss/colors";
@@ -22,14 +22,13 @@ export interface MazeDimensions {
    * E.g., 0.5 means a cell is half the width of a wall.
    */
   cellWallRatio: number;
-  zoomLevel: number;
 }
 
 export interface MazeSettings {
   dimensions: MazeDimensions;
-  generatingAlgorithm?: GeneratingAlgorithm;
+  generatingAlgorithm?: GenerationAlgorithm;
   doAnimateGenerating: boolean;
-  solvingAlgorithm?: SolvingAlgorithm;
+  solvingAlgorithm?: SolveAlgorithm;
   doAnimateSolving: boolean;
 }
 
@@ -48,7 +47,6 @@ export class MazeRenderer {
       rows: 20,
       cols: 20,
       cellWallRatio: 4.0,
-      zoomLevel: 1,
     },
     doAnimateGenerating: true,
     doAnimateSolving: true,
@@ -66,6 +64,7 @@ export class MazeRenderer {
     this.cellSize = this.fullSize - this.wallSize;
   }
 
+  zoomLevel: number = 1;
   private _ctx: CanvasRenderingContext2D;
   private hiddenCtx: CanvasRenderingContext2D;
   private useHiddenCanvas: boolean = false;
@@ -111,7 +110,7 @@ export class MazeRenderer {
 
   /** Size of cell + vertical wall */
   private get fullSize(): number {
-    return 16 * this._dimensions.zoomLevel;
+    return 16 * this.zoomLevel;
   }
 
   private get cellWallRatio(): number {
@@ -140,7 +139,7 @@ export class MazeRenderer {
     }
 
     await this.stopMazeAnimation();
-    const alg = new Wilsons({ rows: this.rows, cols: this.cols });
+    const alg = new Prims({ rows: this.rows, cols: this.cols });
     this.maze = alg.maze;
 
     if (settings.doAnimateGenerating) {

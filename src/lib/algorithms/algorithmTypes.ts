@@ -1,7 +1,7 @@
-export type GeneratingAlgorithm =
+export type GenerationAlgorithm =
   | "backtracking"
   | "prims"
   | "wilsons"
   | "kruskals";
 
-export type SolvingAlgorithm = "tremaux" | "astar" | "breadth";
+export type SolveAlgorithm = "tremaux" | "astar" | "breadth";
