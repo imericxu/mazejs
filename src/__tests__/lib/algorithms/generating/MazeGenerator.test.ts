@@ -7,7 +7,7 @@ class MockGenerator extends MazeGenerator {
 }
 
 test("The constructor should initialize a fully-neighbored grid", () => {
-  const generator = new MockGenerator(3, 3);
+  const generator = new MockGenerator({ rows: 3, cols: 3 });
   for (let row = 0; row < 3; ++row) {
     for (let col = 0; col < 3; ++col) {
       const cell = generator.maze[row][col];
