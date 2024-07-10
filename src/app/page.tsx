@@ -60,38 +60,40 @@ export default function Home(): ReactElement {
 
   return (
     <main className="flex flex-col items-center gap-8 p-4">
-      <OptionsForm onAction={onAction} solvable={solvable} />
+      <div className="flex flex-col items-center gap-4">
+        <OptionsForm onAction={onAction} solvable={solvable} />
 
-      {/* Zoom settings island */}
-      <RadioGroup
-        name="zoom"
-        defaultValue="1"
-        onChange={(value) => {
-          if (mazeController === null) return;
-          mazeController.zoomTo(parseFloat(value));
-        }}
-        className="glass-tube-container flex items-center gap-2 px-4 py-2 text-sm"
-      >
-        <Label>Zoom</Label>
-        <Radio
-          value="0.25"
-          className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
+        {/* Zoom settings island */}
+        <RadioGroup
+          name="zoom"
+          defaultValue="1"
+          onChange={(value) => {
+            if (mazeController === null) return;
+            mazeController.zoomTo(parseFloat(value));
+          }}
+          className="glass-tube-container flex items-center gap-2 px-4 py-2 text-sm"
         >
-          1/4
-        </Radio>
-        <Radio
-          value="0.5"
-          className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
-        >
-          1/2
-        </Radio>
-        <Radio
-          value="1"
-          className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
-        >
-          1
-        </Radio>
-      </RadioGroup>
+          <Label>Zoom</Label>
+          <Radio
+            value="0.25"
+            className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
+          >
+            1/4
+          </Radio>
+          <Radio
+            value="0.5"
+            className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
+          >
+            1/2
+          </Radio>
+          <Radio
+            value="1"
+            className="glass-tube-container inline-flex h-9 w-9 cursor-pointer items-center justify-center transition-colors hover:bg-blue-500/25 pressed:bg-blue-500/40 selected:cursor-default selected:bg-blue-500/20"
+          >
+            1
+          </Radio>
+        </RadioGroup>
+      </div>
 
       <div className="w-screen overflow-x-scroll p-2">
         <div
