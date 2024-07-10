@@ -58,7 +58,6 @@ export class MazeController {
   private drawer: MazeDrawer;
   private mazeAnimation: AnimationPromise | null = null;
   private shouldSweep: boolean = true;
-  private lastEvent: MazeEvent | null = null;
   private mutex = new Mutex();
 
   private dimensions: MazeDimensions = MazeController.DEFAULTS.dimensions;
@@ -77,9 +76,8 @@ export class MazeController {
   }
 
   public async generate(settings: MazeSettings): Promise<void> {
-    if (this.lastEvent === "solve") this.shouldSweep = true;
-    this.lastEvent = "generate";
-    this.drawer.mazeEvent = "generate";
+    if (this.drawer.lastEvent === "solve") this.shouldSweep = true;
+    this.drawer.lastEvent = "generate";
 
     if (!deepEqual(this.dimensions, settings.dimensions)) {
       this.dimensions = settings.dimensions;
@@ -147,9 +145,8 @@ export class MazeController {
 
   public async solve(settings: MazeSettings): Promise<void> {
     if (this.maze === null) throw new Error("Can't solve null maze");
-    if (this.lastEvent === "generate") this.shouldSweep = false;
-    this.lastEvent = "solve";
-    this.drawer.mazeEvent = "solve";
+    if (this.drawer.lastEvent === "generate") this.shouldSweep = false;
+    this.drawer.lastEvent = "solve";
 
     await this.stopMazeAnimation();
 
@@ -160,12 +157,12 @@ export class MazeController {
     if (settings.doAnimateSolving) {
       if (this.shouldSweep) {
         this.drawer.useHiddenCtx = true;
-        this.drawer.mazeEvent = "generate";
+        this.drawer.lastEvent = "generate";
         this.drawer.isComplete = true;
         this.drawer.draw();
         this.drawer.animateCanvasCopyFill();
         this.drawer.useHiddenCtx = false;
-        this.drawer.mazeEvent = "solve";
+        this.drawer.lastEvent = "solve";
       }
 
       const animation = new AnimationPromise(
@@ -213,8 +210,7 @@ export class MazeController {
     await this.stopMazeAnimation();
     this.maze = null;
     this.shouldSweep = false;
-    this.lastEvent = null;
-    this.drawer.mazeEvent = null;
+    this.drawer.lastEvent = null;
     this.drawer.fillWithWall();
   }
 

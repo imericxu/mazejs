@@ -36,7 +36,7 @@ export default class MazeDrawer {
   /** Ratio of cell width to vertical wall width. */
   public cellWallRatio: number = MazeDrawer.DEFAULT_VALUES.cellWallRatio;
 
-  public mazeEvent: MazeEvent | null = null;
+  public lastEvent: MazeEvent | null = null;
   public maze: MazeCell[][] | null = null;
   public startEnd: [MazeCell, MazeCell] | null = null;
   public path: readonly Readonly<MazeCell>[] | null = null;
@@ -230,6 +230,7 @@ export default class MazeDrawer {
     });
   }
 
+  /** Draws the current state of the maze. */
   public draw(): void {
     if (this.maze === null || !this.shouldDraw) {
       this.ctx.fillStyle = COLOR.empty;
@@ -237,7 +238,7 @@ export default class MazeDrawer {
       return;
     }
 
-    if (this.mazeEvent === "generate") {
+    if (this.lastEvent === "generate") {
       if (this.isComplete) {
         this.drawMaze();
       } else {
@@ -246,7 +247,7 @@ export default class MazeDrawer {
       return;
     }
 
-    if (this.mazeEvent === "solve") {
+    if (this.lastEvent === "solve") {
       if (this.isComplete) {
         this.drawMaze();
         this.drawStartEnd();
@@ -550,7 +551,7 @@ export default class MazeDrawer {
   ): string {
     if (!cell.connections.includes(neighbor as MazeCell)) return COLOR.empty;
 
-    if (this.mazeEvent === "solve") {
+    if (this.lastEvent === "solve") {
       return match([cell.state, neighbor.state])
         .when(
           (states) => states.includes("solid"),
