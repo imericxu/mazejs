@@ -24,7 +24,7 @@ export default function RootLayout({
       <body
         className={twMerge(
           latoFont.className,
-          "min-h-full bg-gradient-to-b from-blue-100 to-blue-300 bg-fixed text-slate-900",
+          "min-h-full bg-blue-200 bg-gradient-to-b from-blue-100 to-blue-300 bg-fixed text-slate-900",
         )}
       >
         {children}
