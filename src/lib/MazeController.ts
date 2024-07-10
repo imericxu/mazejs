@@ -150,6 +150,7 @@ export class MazeController {
     if (this.lastEvent === "generate") this.shouldSweep = false;
     this.lastEvent = "solve";
     this.drawer.mazeEvent = "solve";
+
     await this.stopMazeAnimation();
 
     const [start, end] = this.randomStartEnd();
