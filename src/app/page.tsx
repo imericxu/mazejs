@@ -1,5 +1,6 @@
 "use client";
-import { MazeController, type MazeSettings } from "@/lib/MazeController";
+import type { MazeSettings } from "@/lib/maze";
+import { MazeController } from "@/lib/MazeController";
 import { type RectSize } from "@/lib/twoDimens";
 import {
   useCallback,
@@ -60,8 +61,10 @@ export default function Home(): ReactElement {
 
   return (
     <main className="flex flex-col items-center gap-8 p-4">
-      <div className="flex flex-col items-center gap-4">
-        <OptionsForm onAction={onAction} solvable={solvable} />
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-screen overflow-x-scroll p-2">
+          <OptionsForm onAction={onAction} solvable={solvable} />
+        </div>
 
         {/* Zoom settings island */}
         <RadioGroup

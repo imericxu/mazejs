@@ -1,39 +1,27 @@
 import { Mutex } from "async-mutex";
 import { match } from "ts-pattern";
 import {
-  type GenerationAlgorithm,
-  type SolveAlgorithm,
-} from "./algorithms/algorithmTypes";
-import { MazeGenerator } from "./algorithms/generating/MazeGenerator";
-import { Wilsons } from "./algorithms/generating/Wilsons";
-import { BFS } from "./algorithms/solving/BFS";
-import { MazeSolver } from "./algorithms/solving/MazeSolver";
+  Backtracker,
+  BFS,
+  MazeGenerator,
+  MazeSolver,
+  Prims,
+  Tremaux,
+  Wilsons,
+} from "./algorithms/algorithms";
 import { AnimationPromise } from "./AnimationPromise";
+import {
+  GENERATION_ALGORITHMS,
+  GenerationAlgorithm,
+  SOLVE_ALGORITHMS,
+  SolveAlgorithm,
+  type MazeDimensions,
+  type MazeSettings,
+} from "./maze";
 import { type MazeCell } from "./MazeCell";
 import MazeDrawer from "./MazeDrawer";
-import { type RectSize } from "./twoDimens";
-import { clamp, deepEqual } from "./utils";
-
-export type MazeEvent = "generate" | "solve";
-
-export interface MazeDimensions {
-  rows: number;
-  cols: number;
-  /**
-   * Width of cell vs wall.
-   *
-   * E.g., 0.5 means a cell is half the width of a wall.
-   */
-  cellWallRatio: number;
-}
-
-export interface MazeSettings {
-  dimensions: MazeDimensions;
-  generatingAlgorithm?: GenerationAlgorithm;
-  doAnimateGenerating: boolean;
-  solvingAlgorithm?: SolveAlgorithm;
-  doAnimateSolving: boolean;
-}
+import type { RectSize } from "./twoDimens";
+import { clamp, deepEqual, randomFromArray } from "./utils";
 
 export class MazeController {
   /** Range of rows/cols allowed. */
@@ -51,7 +39,9 @@ export class MazeController {
       cols: 20,
       cellWallRatio: MazeDrawer.DEFAULT_VALUES.cellWallRatio,
     },
+    generationAlgorithm: "random",
     doAnimateGenerating: true,
+    solveAlgorithm: "random",
     doAnimateSolving: true,
   } as const;
 
@@ -97,7 +87,15 @@ export class MazeController {
     const { rows, cols } = this.dimensions;
 
     await this.stopMazeAnimation();
-    const alg: MazeGenerator = new Wilsons({ rows, cols });
+    const algType: Exclude<GenerationAlgorithm, "random"> =
+      settings.generationAlgorithm === "random"
+        ? randomFromArray(GENERATION_ALGORITHMS.filter((x) => x !== "random"))
+        : settings.generationAlgorithm;
+    const alg: MazeGenerator = match(algType)
+      .with("backtracker", () => new Backtracker({ rows, cols }))
+      .with("wilsons", () => new Wilsons({ rows, cols }))
+      .with("prims", () => new Prims({ rows, cols }))
+      .exhaustive();
     this.maze = alg.maze;
     this.drawer.maze = this.maze;
 
@@ -165,7 +163,14 @@ export class MazeController {
 
     const [start, end] = this.randomStartEnd();
     this.drawer.startEnd = [start, end];
-    const alg: MazeSolver = new BFS(this.maze, start, end);
+    const algType: Exclude<SolveAlgorithm, "random"> =
+      settings.solveAlgorithm === "random"
+        ? randomFromArray(SOLVE_ALGORITHMS.filter((x) => x !== "random"))
+        : settings.solveAlgorithm;
+    const alg: MazeSolver = match(algType)
+      .with("bfs", () => new BFS(this.maze!, start, end))
+      .with("tremaux", () => new Tremaux(this.maze!, start, end))
+      .exhaustive();
 
     if (settings.doAnimateSolving) {
       if (this.shouldSweep) {

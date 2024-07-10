@@ -1,14 +1,9 @@
 import colors from "tailwindcss/colors";
 import { match } from "ts-pattern";
 import { AnimationPromise } from "./AnimationPromise";
+import type { MazeDimensions, MazeEvent } from "./maze";
 import { type MazeCell } from "./MazeCell";
-import { type MazeDimensions, type MazeEvent } from "./MazeController";
-import {
-  type RectSize,
-  type Coord,
-  type GridSize,
-  type Idx2d,
-} from "./twoDimens";
+import type { Coord, GridSize, Idx2d, RectSize } from "./twoDimens";
 import { clamp, easeOutQuad, type Direction } from "./utils";
 
 /** Colors used by the renderer. */

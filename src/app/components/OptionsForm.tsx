@@ -1,5 +1,10 @@
 import { type FormActionType } from "@/app/page";
-import { MazeController, type MazeSettings } from "@/lib/MazeController";
+import type {
+  GenerationAlgorithm,
+  MazeSettings,
+  SolveAlgorithm,
+} from "@/lib/maze";
+import { MazeController } from "@/lib/MazeController";
 import { getFloatFromForm, getIntFromForm } from "@/lib/utils";
 import { useCallback, useRef, type ReactElement } from "react";
 import {
@@ -12,6 +17,20 @@ import {
   TextField,
 } from "react-aria-components";
 import { twMerge } from "tailwind-merge";
+import GlassSelect from "./GlassSelect";
+
+const GENERATION_ALGORITHMS: Record<GenerationAlgorithm, string> = {
+  random: "Surprise Me!",
+  prims: "Prim’s Algorithm",
+  wilsons: "Wilson’s Algorithm",
+  backtracker: "Recursive Backtracker",
+} as const;
+
+const SOLVE_ALGORITHMS: Record<SolveAlgorithm, string> = {
+  random: "Surprise Me!",
+  bfs: "Flood Fill (BFS)",
+  tremaux: "Trémaux’s Algorithm (DFS)",
+} as const;
 
 export interface OptionsFormProps {
   onAction: (action: FormActionType, settings: MazeSettings) => void;
@@ -40,8 +59,14 @@ export default function OptionsForm({
       const cellWallRatio: number =
         getFloatFromForm(formData, "cellWallRatio") ??
         MazeController.DEFAULTS.dimensions.cellWallRatio;
+      const generationAlgorithm: GenerationAlgorithm = formData.get(
+        "generationAlgorithm",
+      ) as GenerationAlgorithm;
       const doAnimateGenerating: boolean =
         formData.get("doAnimateGeneration") === "on";
+      const solveAlgorithm: SolveAlgorithm = formData.get(
+        "solveAlgorithm",
+      ) as SolveAlgorithm;
       const doAnimateSolving: boolean =
         formData.get("doAnimateSolving") === "on";
 
@@ -51,7 +76,9 @@ export default function OptionsForm({
           cols,
           cellWallRatio,
         },
+        generationAlgorithm,
         doAnimateGenerating,
+        solveAlgorithm,
         doAnimateSolving,
       };
 
@@ -138,6 +165,14 @@ export default function OptionsForm({
           </div>
         </TextField>
 
+        {/* Generation Algorithm Dropdown */}
+        <GlassSelect
+          name="generationAlgorithm"
+          defaultSelectedKey="random"
+          label="Generation Algorithm"
+          items={Object.entries(GENERATION_ALGORITHMS)}
+        />
+
         {/* Animate Generating Switch */}
         <Switch
           name="doAnimateGeneration"
@@ -153,7 +188,13 @@ export default function OptionsForm({
           </div>
         </Switch>
 
-        {/* Generation Algorithms Select */}
+        {/* Solve Algorithm Dropdown */}
+        <GlassSelect
+          name="solveAlgorithm"
+          defaultSelectedKey="random"
+          label="Solve Algorithm"
+          items={Object.entries(SOLVE_ALGORITHMS)}
+        />
 
         {/* Animate Solving Switch */}
         <Switch

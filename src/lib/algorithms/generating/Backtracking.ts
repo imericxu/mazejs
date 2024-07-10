@@ -8,7 +8,7 @@ import { randomFromArray } from "@/lib/utils";
  * Randomly connects to unvisited nodes until it hits a dead end, then it
  * backtracks. This is a recursive algorithm, but it's implemented iteratively.
  */
-export class Backtracking extends MazeGenerator {
+export class Backtracker extends MazeGenerator {
   private exploreStack: MazeCell[] = [];
 
   protected _step(): [boolean, Readonly<MazeCell>[]] {
