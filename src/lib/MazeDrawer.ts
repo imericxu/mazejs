@@ -23,7 +23,7 @@ export default class MazeDrawer {
     zoomLevel: [0.25, 0.5, 1],
   } as const;
   public static readonly DEFAULT_VALUES = {
-    cellWallRatio: 4,
+    cellWallRatio: 5,
     zoomLevel: 1,
   } as const;
 
