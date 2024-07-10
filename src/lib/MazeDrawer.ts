@@ -4,12 +4,17 @@ import { type MazeCell } from "./MazeCell";
 import { RectSize, type Coord, type GridSize, type Idx2d } from "./twoDimens";
 import { clamp, easeOutQuad, type Direction } from "./utils";
 import { AnimationPromise } from "./AnimationPromise";
+import { MazeDimensions, MazeEvent } from "./MazeController";
 
 /** Colors used by the renderer. */
 const COLOR = {
   empty: colors.blue[500],
   partial: colors.blue[300],
   solid: colors.blue[50],
+  path: colors.slate[700],
+  partialPath: "#33415566" /* colors.slate[700] / 40 */,
+  start: colors.amber[500],
+  end: colors.fuchsia[500],
 } as const;
 
 export default class MazeDrawer {
@@ -18,7 +23,7 @@ export default class MazeDrawer {
     zoomLevel: [0.25, 0.5, 1],
   } as const;
   public static readonly DEFAULT_VALUES = {
-    cellWallRatio: 1.5,
+    cellWallRatio: 4,
     zoomLevel: 1,
   } as const;
 
@@ -28,11 +33,18 @@ export default class MazeDrawer {
 
   /** Whether to use the hidden canvas rendering context. */
   public useHiddenCtx: boolean = false;
+  /** Ratio of cell width to vertical wall width. */
+  public cellWallRatio: number = MazeDrawer.DEFAULT_VALUES.cellWallRatio;
+
+  public mazeEvent: MazeEvent | null = null;
+  public maze: MazeCell[][] | null = null;
+  public startEnd: [MazeCell, MazeCell] | null = null;
+  public path: readonly Readonly<MazeCell>[] | null = null;
+  public isComplete: boolean = false;
+  public changeList: Readonly<MazeCell>[] = [];
 
   /** Dimensions of the maze. */
   private gridSize: Readonly<GridSize>;
-  /** Ratio of cell width to vertical wall width. */
-  private cellWallRatio: number = MazeDrawer.DEFAULT_VALUES.cellWallRatio;
   /** Zoom level of the maze. */
   private zoomLevel: number = MazeDrawer.DEFAULT_VALUES.zoomLevel;
 
@@ -71,7 +83,7 @@ export default class MazeDrawer {
       })
       .otherwise((ctx) => ctx);
     this.gridSize = initialGridSize;
-    this.resize(this.gridSize);
+    this.resize({ ...this.gridSize, cellWallRatio: this.cellWallRatio });
   }
 
   /////////////////////////////////////
@@ -134,9 +146,10 @@ export default class MazeDrawer {
   /////////////////////////////////////
 
   /** Updates the renderer and canvas with the new size. */
-  public resize(size: Readonly<GridSize>): void {
+  public resize(dims: Readonly<MazeDimensions>): void {
     this.animateFloodFill(null);
-    this.gridSize = size;
+    this.gridSize = dims;
+    this.cellWallRatio = dims.cellWallRatio;
     this.updateCanvasSize();
     this.setContainerSize({ width: this.width, height: this.height });
     this.visibleCtx.canvas.style.width = `${this.width}px`;
@@ -144,17 +157,21 @@ export default class MazeDrawer {
     this.fillWithWall();
   }
 
-  public zoomTo(
-    zoomLevel: number,
-    maze: readonly Readonly<MazeCell>[][] | null,
-  ): void {
+  public zoomTo(zoomLevel: number): void {
     this.zoomLevel = zoomLevel;
     this.updateCanvasSize();
-    if (maze !== null) this.drawIncompleteMaze(maze);
+    const redraw = () => {
+      this.ctx.fillStyle = COLOR.empty;
+      this.ctx.fillRect(0, 0, this.width, this.height);
+      this.isComplete = true;
+      this.draw();
+      this.isComplete = false;
+    };
+    redraw();
     this.setContainerSize({ width: this.width, height: this.height });
     this.visibleCtx.canvas.style.width = `${this.width}px`;
     this.visibleCtx.canvas.style.height = `${this.height}px`;
-    if (maze !== null) this.drawIncompleteMaze(maze);
+    redraw();
   }
 
   /** Returns a promise that resolves when the animations are done. */
@@ -212,16 +229,49 @@ export default class MazeDrawer {
     });
   }
 
+  public draw(): void {
+    if (this.maze === null) {
+      this.ctx.fillStyle = COLOR.empty;
+      this.ctx.fillRect(0, 0, this.width, this.height);
+      return;
+    }
+
+    if (this.mazeEvent === "generate") {
+      if (this.isComplete) {
+        this.drawMaze();
+      } else {
+        this.drawModifiedCells();
+      }
+      return;
+    }
+
+    if (this.mazeEvent === "solve") {
+      if (this.isComplete) {
+        this.drawMaze();
+        this.drawStartEnd();
+        this.drawPath(false);
+      } else {
+        this.drawModifiedCells();
+        this.drawStartEnd();
+        this.drawPath(true);
+      }
+      return;
+    }
+
+    throw new Error("Invalid maze event");
+  }
+
   /**
    * Draw only the modified cells and their walls.
    *
    * Comparable to a dirty rect update.
    */
-  public drawModifiedCells(modifiedCells: readonly Readonly<MazeCell>[]): void {
-    for (const cell of modifiedCells) {
-      this.drawCell(cell);
+  private drawModifiedCells(): void {
+    for (const cell of this.changeList) {
+      this.fillCell(cell);
       this.drawCellWalls(cell);
     }
+    this.changeList = [];
   }
 
   /**
@@ -230,7 +280,8 @@ export default class MazeDrawer {
    * - `this.maze` must not be null.
    * - Clears the canvas and draws the maze from scratch.
    */
-  public drawFinishedMaze(maze: readonly Readonly<MazeCell>[][]): void {
+  private drawFinishedMaze(): void {
+    if (this.maze === null) throw new Error();
     // Fill the canvas with empty color
     const ctx = this.ctx;
     this.ctx.fillStyle = COLOR.empty;
@@ -240,20 +291,20 @@ export default class MazeDrawer {
     ctx.fillStyle = COLOR.solid;
     for (let row = 0; row < this.gridSize.rows; ++row) {
       for (let col = 0; col < this.gridSize.cols; ++col) {
-        const cell: Readonly<MazeCell> = maze[row][col];
-        this.drawCell(cell);
+        const cell: Readonly<MazeCell> = this.maze[row][col];
+        this.fillCell(cell);
         // Clear the right wall if connected
         if (
           col !== this.gridSize.cols - 1 &&
           // Can't call `includes` with `readonly` for some reason
-          cell.connections.includes(maze[row][col + 1] as MazeCell)
+          cell.connections.includes(this.maze[row][col + 1] as MazeCell)
         ) {
           this.drawWall(cell, "right");
         }
         // Clear the bottom wall if connected
         if (
           row !== this.gridSize.rows - 1 &&
-          cell.connections.includes(maze[row + 1][col] as MazeCell)
+          cell.connections.includes(this.maze[row + 1][col] as MazeCell)
         ) {
           this.drawWall(cell, "down");
         }
@@ -264,7 +315,8 @@ export default class MazeDrawer {
   /**
    * Draws the maze assuming the maze is incomplete.
    */
-  public drawIncompleteMaze(maze: readonly Readonly<MazeCell>[][]): void {
+  private drawMaze(): void {
+    if (this.maze === null) throw new Error();
     // Fill the canvas with empty color
     const ctx = this.ctx;
     ctx.fillStyle = COLOR.empty;
@@ -273,34 +325,69 @@ export default class MazeDrawer {
     // Draw from top to bottom, left to right
     for (let row = 0; row < this.gridSize.rows; ++row) {
       for (let col = 0; col < this.gridSize.cols; ++col) {
-        const cell: Readonly<MazeCell> = maze[row][col];
-        this.drawCell(cell);
+        const cell: Readonly<MazeCell> = this.maze[row][col];
+        this.fillCell(cell);
         // Draw right wall
-        ctx.fillStyle = this.determineWallColor(cell, maze[row][col + 1]);
-        this.drawWall(cell, "right");
+        if (col !== this.gridSize.cols - 1) {
+          ctx.fillStyle = this.determineWallColor(
+            cell,
+            this.maze[row][col + 1],
+          );
+          this.drawWall(cell, "right");
+        }
         // Draw bottom wall
-        ctx.fillStyle = this.determineWallColor(cell, maze[row + 1][col]);
-        this.drawWall(cell, "down");
+        if (row !== this.gridSize.rows - 1) {
+          ctx.fillStyle = this.determineWallColor(
+            cell,
+            this.maze[row + 1][col],
+          );
+          this.drawWall(cell, "down");
+        }
       }
     }
   }
 
-  /////////////////////////////////////
-  // Private Methods
-  /////////////////////////////////////
+  private drawPath(isPartial: boolean): void {
+    if (this.path === null || this.path.length <= 1) return;
+    const halfCellSize: number = this.cellSize / 2;
 
-  /** Pauses all animations. */
-  private pauseAnimations(): void {
-    this.sweepAnimations.forEach((animation) => {
-      animation.pause();
-    });
+    const calcPathCoord = (pathCell: Readonly<MazeCell>): Coord => {
+      const topLeft: Coord = this.calcCellTopLeft(pathCell);
+      return {
+        x: topLeft.x + halfCellSize,
+        y: topLeft.y + halfCellSize,
+      };
+    };
+
+    this.ctx.beginPath();
+    let coord: Coord = calcPathCoord(this.path[0]);
+    this.ctx.moveTo(coord.x, coord.y);
+    coord = calcPathCoord(this.path[1]);
+    this.ctx.lineTo(coord.x, coord.y);
+    this.ctx.strokeStyle = COLOR.path;
+    this.ctx.stroke();
+
+    this.ctx.beginPath();
+    for (let i = 0; i < this.path.length; ++i) {
+      coord = calcPathCoord(this.path[i]);
+      if (i === 0) {
+        this.ctx.moveTo(coord.x, coord.y);
+      } else {
+        this.ctx.lineTo(coord.x, coord.y);
+      }
+    }
+    this.ctx.strokeStyle = isPartial ? COLOR.partialPath : COLOR.path;
+    this.ctx.lineWidth =
+      this.cellWallRatio < 1
+        ? Math.ceil(this.cellSize * 0.8)
+        : Math.max(1, Math.round(this.cellSize * 0.2));
+    this.ctx.stroke();
   }
 
-  /** Unpauses all animations. */
-  private unpauseAnimations(): void {
-    this.sweepAnimations.forEach((animation) => {
-      animation.unpause();
-    });
+  private drawStartEnd(): void {
+    if (this.startEnd === null) throw Error();
+    this.drawStartEndCell(this.startEnd[0], true);
+    this.drawStartEndCell(this.startEnd[1], false);
   }
 
   /**
@@ -384,13 +471,19 @@ export default class MazeDrawer {
   /**
    * Draws the given cell.
    */
-  private drawCell(cell: Readonly<MazeCell>): void {
+  private fillCell(
+    cell: Readonly<MazeCell>,
+    color: string | null = null,
+  ): void {
     const topLeft: Coord = this.calcCellTopLeft(cell.idx2d);
-    this.ctx.fillStyle = match(cell.state)
-      .with("empty", () => COLOR.empty)
-      .with("partial", () => COLOR.partial)
-      .with("solid", () => COLOR.solid)
-      .exhaustive();
+    this.ctx.fillStyle =
+      color === null
+        ? match(cell.state)
+            .with("empty", () => COLOR.empty)
+            .with("partial", () => COLOR.partial)
+            .with("solid", () => COLOR.solid)
+            .exhaustive()
+        : color;
     this.ctx.fillRect(topLeft.x, topLeft.y, this.cellSize, this.cellSize);
   }
 
@@ -426,6 +519,21 @@ export default class MazeDrawer {
       .exhaustive();
   }
 
+  private drawStartEndCell(cell: Readonly<MazeCell>, isStart: boolean): void {
+    const center: Coord = this.calcCellCenter(cell.idx2d);
+    const width: number = Math.max(
+      this.cellSize,
+      Math.round(this.fullSize * 0.75),
+    );
+    this.ctx.fillStyle = isStart ? COLOR.start : COLOR.end;
+    this.ctx.fillRect(
+      center.x - Math.round(width / 2),
+      center.y - Math.round(width / 2),
+      width,
+      width,
+    );
+  }
+
   private updateCanvasSize(): void {
     const cellSize: number = this.cellSize;
     const wallSize: number = this.wallSize;
@@ -440,12 +548,22 @@ export default class MazeDrawer {
     neighbor: Readonly<MazeCell>,
   ): string {
     if (!cell.connections.includes(neighbor as MazeCell)) return COLOR.empty;
-    return match([cell.state, neighbor.state])
-      .when(
-        (states) => states.includes("partial"),
-        () => COLOR.partial,
-      )
-      .otherwise(() => COLOR.solid);
+
+    if (this.mazeEvent === "solve") {
+      return match([cell.state, neighbor.state])
+        .when(
+          (states) => states.includes("solid"),
+          () => COLOR.solid,
+        )
+        .otherwise(() => COLOR.partial);
+    } else {
+      return match([cell.state, neighbor.state])
+        .when(
+          (states) => states.includes("partial"),
+          () => COLOR.partial,
+        )
+        .otherwise(() => COLOR.solid);
+    }
   }
 
   /**
@@ -477,6 +595,16 @@ export default class MazeDrawer {
     return {
       x: fullSize * col + wallSize,
       y: fullSize * row + wallSize,
+    };
+  }
+
+  private calcCellCenter({ row, col }: Idx2d): Coord {
+    const halfCellSize: number = Math.round(this.cellSize / 2);
+    const wallSize: number = this.wallSize;
+    const fullSize: number = this.cellSize + wallSize;
+    return {
+      x: fullSize * col + wallSize + halfCellSize,
+      y: fullSize * row + wallSize + halfCellSize,
     };
   }
 }

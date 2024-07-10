@@ -1,18 +1,20 @@
-import { match } from "ts-pattern";
+import { Mutex } from "async-mutex";
 import {
   type GenerationAlgorithm,
   type SolveAlgorithm,
 } from "./algorithms/algorithmTypes";
-import { Backtracking } from "./algorithms/generating/Backtracking";
-import { Prims } from "./algorithms/generating/Prims";
-import { MazeCell } from "./MazeCell";
-import { clamp, deepEqual, Direction, easeOutQuad } from "./utils";
-import { Wilsons } from "./algorithms/generating/Wilsons";
-import { Idx2d, Coord, RectSize } from "./twoDimens";
 import { AnimationPromise } from "./AnimationPromise";
-import { Mutex } from "async-mutex";
-import colors from "tailwindcss/colors";
+import { MazeCell } from "./MazeCell";
 import MazeDrawer from "./MazeDrawer";
+import { RectSize } from "./twoDimens";
+import { clamp, deepEqual } from "./utils";
+import { Tremaux } from "./algorithms/solving/Tremaux";
+import { match } from "ts-pattern";
+import { MazeGenerator } from "./algorithms/generating/MazeGenerator";
+import { MazeSolver } from "./algorithms/solving/MazeSolver";
+import { Wilsons } from "./algorithms/generating/Wilsons";
+
+export type MazeEvent = "generate" | "solve";
 
 export interface MazeDimensions {
   rows: number;
@@ -47,7 +49,7 @@ export class MazeController {
     dimensions: {
       rows: 20,
       cols: 20,
-      cellWallRatio: 4.0,
+      cellWallRatio: MazeDrawer.DEFAULT_VALUES.cellWallRatio,
     },
     doAnimateGenerating: true,
     doAnimateSolving: true,
@@ -55,7 +57,8 @@ export class MazeController {
 
   private drawer: MazeDrawer;
   private mazeAnimation: AnimationPromise | null = null;
-  private isCanvasEmpty: boolean = true;
+  private shouldSweep: boolean = true;
+  private lastEvent: MazeEvent | null = null;
   private mutex = new Mutex();
 
   private dimensions: MazeDimensions = MazeController.DEFAULTS.dimensions;
@@ -74,23 +77,28 @@ export class MazeController {
   }
 
   public async generate(settings: MazeSettings): Promise<void> {
+    if (this.lastEvent === "solve") this.shouldSweep = true;
+    this.lastEvent = "generate";
+    this.drawer.mazeEvent = "generate";
+
     if (!deepEqual(this.dimensions, settings.dimensions)) {
       this.dimensions = settings.dimensions;
       this.drawer.resize(this.dimensions);
-      this.isCanvasEmpty = true;
+      this.shouldSweep = false;
     }
 
     const { rows, cols } = this.dimensions;
 
-    this.stopMazeAnimation();
-    const alg = new Backtracking({ rows, cols });
+    await this.stopMazeAnimation();
+    const alg: MazeGenerator = new Wilsons({ rows, cols });
     this.maze = alg.maze;
+    this.drawer.maze = this.maze;
 
     if (settings.doAnimateGenerating) {
       // Do a sweep animation if the resize didn't already do one
-      if (!this.isCanvasEmpty) {
+      if (this.shouldSweep) {
         this.drawer.fillWithWall();
-        this.isCanvasEmpty = true;
+        this.shouldSweep = false;
       }
       // Dynamically decide the number of steps to take based on total number
       // of cells. Increases exponentially with number of cells.
@@ -100,17 +108,16 @@ export class MazeController {
       // Define the animation
       const animation = new AnimationPromise(
         () => {
-          const modifiedCells: Readonly<MazeCell>[] = [];
           for (let i = 0; i < steps; i++) {
             const cells = alg.step();
-            modifiedCells.push(...cells);
+            this.drawer.changeList.push(...cells);
           }
-          this.drawer.drawModifiedCells(modifiedCells);
+          this.drawer.draw();
         },
         () => {
           if (alg.finished) {
-            if (this.maze === null) throw new Error("Maze is null");
-            this.drawer.drawFinishedMaze(this.maze);
+            this.drawer.isComplete = true;
+            this.drawer.draw();
             return true;
           }
           return false;
@@ -121,6 +128,7 @@ export class MazeController {
       this.mutex.runExclusive(async () => {
         await this.stopMazeAnimation();
         await this.drawer.waitForSweepAnimations();
+        this.drawer.isComplete = false;
         this.mazeAnimation = animation;
         this.mazeAnimation.start();
         this.mazeAnimation.promise.then(() => {
@@ -129,22 +137,89 @@ export class MazeController {
       });
     } else {
       alg.finish();
+      this.drawer.isComplete = true;
       this.drawer.useHiddenCtx = true;
-      this.drawer.drawFinishedMaze(this.maze);
+      this.drawer.draw();
       this.drawer.animateCanvasCopyFill();
       this.drawer.useHiddenCtx = false;
     }
-    this.isCanvasEmpty = false;
+    this.shouldSweep = true;
   }
 
-  public solve(settings: MazeSettings): void {}
+  public async solve(settings: MazeSettings): Promise<void> {
+    if (this.maze === null) throw new Error("Can't solve null maze");
+    if (this.lastEvent === "generate") this.shouldSweep = false;
+    this.lastEvent = "solve";
+    this.drawer.mazeEvent = "solve";
+    await this.stopMazeAnimation();
+
+    const [start, end] = this.randomStartEnd();
+    this.drawer.startEnd = [start, end];
+    const alg: MazeSolver = new Tremaux(this.maze, start, end);
+
+    if (settings.doAnimateSolving) {
+      if (this.shouldSweep) {
+        this.drawer.useHiddenCtx = true;
+        this.drawer.mazeEvent = "generate";
+        this.drawer.isComplete = true;
+        this.drawer.draw();
+        this.drawer.animateCanvasCopyFill();
+        this.drawer.useHiddenCtx = false;
+        this.drawer.mazeEvent = "solve";
+      }
+
+      const animation = new AnimationPromise(
+        () => {
+          this.drawer.changeList = alg.step();
+          this.drawer.path = alg.path;
+          this.drawer.draw();
+        },
+        () => {
+          if (!alg.finished) return false;
+          this.drawer.isComplete = true;
+          this.drawer.draw();
+          return true;
+        },
+        60,
+      );
+
+      this.mutex.runExclusive(async () => {
+        await this.stopMazeAnimation();
+        await this.drawer.waitForSweepAnimations();
+        this.drawer.isComplete = false;
+        this.mazeAnimation = animation;
+        this.mazeAnimation.start();
+        this.shouldSweep = true;
+        this.mazeAnimation.promise.then(() => {
+          this.mazeAnimation = null;
+        });
+      });
+    } else {
+      alg.finish();
+      this.drawer.path = alg.path;
+      this.drawer.isComplete = true;
+      this.drawer.useHiddenCtx = true;
+      this.drawer.draw();
+      this.drawer.animateCanvasCopyFill();
+      this.drawer.useHiddenCtx = false;
+    }
+    this.shouldSweep = true;
+  }
 
   /**
    * Empties the canvas and stops all animations.
    */
   public clear(): void {
+    this.maze = null;
+    this.shouldSweep = false;
+    this.lastEvent = null;
+    this.drawer.mazeEvent = null;
     this.stopMazeAnimation();
     this.drawer.fillWithWall();
+  }
+
+  public zoomTo(zoomLevel: number): void {
+    this.drawer.zoomTo(zoomLevel);
   }
 
   /**
@@ -154,5 +229,32 @@ export class MazeController {
     const promise = this.mazeAnimation?.promise;
     this.mazeAnimation?.cancel();
     await promise;
+  }
+
+  private randomStartEnd(): [MazeCell, MazeCell] {
+    if (this.maze === null) throw new Error("Maze is null");
+    return match(Math.random() < 0.5)
+      .returnType<[MazeCell, MazeCell]>()
+      .with(true, () => {
+        // Horizontal
+        const start: MazeCell =
+          this.maze![Math.floor(Math.random() * this.dimensions.rows)][0];
+        const end: MazeCell =
+          this.maze![Math.floor(Math.random() * this.dimensions.rows)][
+            this.dimensions.cols - 1
+          ];
+        return [start, end];
+      })
+      .with(false, () => {
+        // Vertical
+        const start: MazeCell =
+          this.maze![0][Math.floor(Math.random() * this.dimensions.cols)];
+        const end: MazeCell =
+          this.maze![this.dimensions.rows - 1][
+            Math.floor(Math.random() * this.dimensions.cols)
+          ];
+        return [start, end];
+      })
+      .exhaustive();
   }
 }

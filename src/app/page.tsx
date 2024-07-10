@@ -61,6 +61,10 @@ export default function Home(): ReactElement {
       <RadioGroup
         name="zoom"
         defaultValue="1"
+        onChange={(value) => {
+          if (mazeController === null) return;
+          mazeController.zoomTo(parseFloat(value));
+        }}
         className="glass-tube-container flex items-center gap-2 px-4 py-2 text-sm"
       >
         <Label>Zoom</Label>
