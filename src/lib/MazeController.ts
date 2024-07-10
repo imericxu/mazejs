@@ -143,6 +143,7 @@ export class MazeController {
       this.drawer.shouldDraw = settings.doAnimateGenerating;
       this.mazeAnimation = animation;
       this.mazeAnimation.start();
+      this.shouldSweep = true;
       this.mazeAnimation.promise.then(() => {
         this.mazeAnimation = null;
         this.drawer.isComplete = true;
@@ -152,7 +153,6 @@ export class MazeController {
         if (!settings.doAnimateGenerating) this.drawer.animateCanvasCopyFill();
         this.drawer.useHiddenCtx = false;
       });
-      this.shouldSweep = true;
     });
   }
 
