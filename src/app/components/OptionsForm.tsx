@@ -15,11 +15,13 @@ import { FormActionType } from "../page";
 
 export interface OptionsFormProps {
   onAction: (action: FormActionType, settings: MazeSettings) => void;
+  solvable: boolean;
   className?: string;
 }
 
 export default function OptionsForm({
   onAction,
+  solvable,
   className,
 }: OptionsFormProps): ReactElement {
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -177,8 +179,9 @@ export default function OptionsForm({
         </Button>
 
         <Button
+          isDisabled={!solvable}
           onPress={() => handlePress("solve")}
-          className="glass-tube-container h-8 bg-blue-500/20 px-4 transition hover:bg-blue-500/30 pressed:bg-blue-500/40"
+          className="glass-tube-container h-8 bg-blue-500/20 px-4 transition hover:bg-blue-500/30 pressed:bg-blue-500/40 disabled:cursor-not-allowed disabled:bg-slate-700/20"
         >
           Solve
         </Button>

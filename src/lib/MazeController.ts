@@ -64,9 +64,17 @@ export class MazeController {
 
   private maze: MazeCell[][] | null = null;
 
+  /**
+   * @param ctx - The canvas context to draw on.
+   * @param setContainerSize - Callback to set the container size when the maze
+   *   is resized.
+   * @param setSolvable - Callback to set whether the maze is in a solvable
+   *   state.
+   */
   constructor(
     ctx: CanvasRenderingContext2D,
     setContainerSize: (size: Readonly<RectSize>) => void,
+    private setSolvable: (solvable: boolean) => void,
   ) {
     this.drawer = new MazeDrawer(
       ctx,
@@ -78,6 +86,7 @@ export class MazeController {
   public async generate(settings: MazeSettings): Promise<void> {
     if (this.drawer.lastEvent === "solve") this.shouldSweep = true;
     this.drawer.lastEvent = "generate";
+    this.setSolvable(false);
 
     if (!deepEqual(this.dimensions, settings.dimensions)) {
       this.dimensions = settings.dimensions;
@@ -119,7 +128,11 @@ export class MazeController {
         }
         if (settings.doAnimateGenerating) this.drawer.draw();
       },
-      () => alg.finished,
+      () => {
+        if (!alg.finished) return false;
+        this.setSolvable(true);
+        return true;
+      },
       settings.doAnimateGenerating ? 60 : null,
     );
 
@@ -207,6 +220,7 @@ export class MazeController {
    * Empties the canvas and stops all animations.
    */
   public async clear(): Promise<void> {
+    this.setSolvable(false);
     await this.stopMazeAnimation();
     this.maze = null;
     this.shouldSweep = false;

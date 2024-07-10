@@ -20,6 +20,7 @@ export default function Home(): ReactElement {
   const [mazeController, setMazeController] = useState<MazeController | null>(
     null,
   );
+  const [solvable, setSolvable] = useState(false);
 
   useEffect(() => {
     if (canvasRef.current === null) return;
@@ -27,11 +28,15 @@ export default function Home(): ReactElement {
     if (ctx === null) return;
     setMazeController((prev) => {
       if (prev !== null) return prev;
-      return new MazeController(ctx, (size: Readonly<RectSize>) => {
-        if (containerRef.current === null) return;
-        containerRef.current.style.width = `${size.width}px`;
-        containerRef.current.style.height = `${size.height}px`;
-      });
+      return new MazeController(
+        ctx,
+        (size: Readonly<RectSize>) => {
+          if (containerRef.current === null) return;
+          containerRef.current.style.width = `${size.width}px`;
+          containerRef.current.style.height = `${size.height}px`;
+        },
+        setSolvable,
+      );
     });
   }, []);
 
@@ -55,7 +60,7 @@ export default function Home(): ReactElement {
 
   return (
     <main className="flex flex-col items-center gap-8 p-4">
-      <OptionsForm onAction={onAction} />
+      <OptionsForm onAction={onAction} solvable={solvable} />
 
       {/* Zoom settings island */}
       <RadioGroup
