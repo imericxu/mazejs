@@ -5,7 +5,7 @@ import {
   randomFromArray,
   randomFromSet,
 } from "@/lib/utils";
-import { describe, expect, it, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("randomFromSet()", () => {
   it("should throw an error when the set is empty", () => {
