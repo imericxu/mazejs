@@ -23,22 +23,26 @@
   }
 }
 
+@mixin glass-tube {
+  @apply shadow shadow-slate-400;
+  border: 1px solid hsl(215deg 25% 26.7% / 0.5);
+  border-radius: 9999px;
+  background-image: linear-gradient(
+    to bottom,
+    hsl(var(--color-slate-50) / 0.5),
+    hsl(var(--color-slate-900) / 0.2) 10%,
+    hsl(var(--color-slate-900) / 0.1) 30%,
+    hsl(var(--color-slate-50) / 0.05) 50%,
+    hsl(var(--color-slate-50) / 0.05) 80%,
+    hsl(var(--color-slate-50) / 0.4)
+  );
+  pointer-events: none;
+}
+
 @layer components {
   /* Standalone glass tubes */
   .glass-tube {
-    @apply shadow shadow-slate-400;
-    border: 1px solid hsl(215deg 25% 26.7% / 0.5);
-    border-radius: 9999px;
-    background-image: linear-gradient(
-      to bottom,
-      hsl(var(--color-slate-50) / 0.5),
-      hsl(var(--color-slate-900) / 0.2) 10%,
-      hsl(var(--color-slate-900) / 0.1) 30%,
-      hsl(var(--color-slate-50) / 0.05) 50%,
-      hsl(var(--color-slate-50) / 0.05) 80%,
-      hsl(var(--color-slate-50) / 0.4)
-    );
-    pointer-events: none;
+    @include glass-tube;
   }
 
   /* Glass-tube container (overlayed on top using pseudo-elements) */
@@ -47,7 +51,7 @@
     border-radius: 9999px;
 
     &::after {
-      @apply glass-tube;
+      @include glass-tube;
       position: absolute;
       inset: 0;
       content: "";
