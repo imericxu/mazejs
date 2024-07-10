@@ -94,56 +94,55 @@ export class MazeController {
     this.maze = alg.maze;
     this.drawer.maze = this.maze;
 
-    if (settings.doAnimateGenerating) {
-      // Do a sweep animation if the resize didn't already do one
-      if (this.shouldSweep) {
-        this.drawer.fillWithWall();
-        this.shouldSweep = false;
-      }
-      // Dynamically decide the number of steps to take based on total number
-      // of cells. Increases exponentially with number of cells.
-      const steps: number = Math.round(
-        clamp(Math.pow(rows * cols, 0.6) * 0.1, 1, rows * cols * 0.2),
-      );
-      // Define the animation
-      const animation = new AnimationPromise(
-        () => {
-          for (let i = 0; i < steps; i++) {
-            const cells = alg.step();
+    // Do a sweep animation if the resize didn't already do one
+    if (settings.doAnimateGenerating && this.shouldSweep) {
+      this.drawer.fillWithWall();
+      this.shouldSweep = false;
+    }
+    // Dynamically decide the number of steps to take based on total number
+    // of cells. Increases exponentially with number of cells.
+    const steps: number = settings.doAnimateGenerating
+      ? Math.min(
+          Math.round(
+            clamp(Math.pow(rows * cols, 0.6) * 0.1, 1, rows * cols * 0.2),
+          ),
+          1000,
+        )
+      : 1000;
+    // Define the animation
+    // Always use animation frames to prevent lag with heavy computations
+    const animation = new AnimationPromise(
+      () => {
+        for (let i = 0; i < steps; i++) {
+          const cells = alg.step();
+          if (settings.doAnimateGenerating) {
             this.drawer.changeList.push(...cells);
           }
-          this.drawer.draw();
-        },
-        () => {
-          if (alg.finished) {
-            this.drawer.isComplete = true;
-            this.drawer.draw();
-            return true;
-          }
-          return false;
-        },
-        60,
-      );
+        }
+        if (settings.doAnimateGenerating) this.drawer.draw();
+      },
+      () => alg.finished,
+      settings.doAnimateGenerating ? 60 : null,
+    );
 
-      this.mutex.runExclusive(async () => {
-        await this.stopMazeAnimation();
-        await this.drawer.waitForSweepAnimations();
-        this.drawer.isComplete = false;
-        this.mazeAnimation = animation;
-        this.mazeAnimation.start();
-        this.mazeAnimation.promise.then(() => {
-          this.mazeAnimation = null;
-        });
+    this.mutex.runExclusive(async () => {
+      await this.stopMazeAnimation();
+      await this.drawer.waitForSweepAnimations();
+      this.drawer.isComplete = false;
+      this.drawer.shouldDraw = settings.doAnimateGenerating;
+      this.mazeAnimation = animation;
+      this.mazeAnimation.start();
+      this.mazeAnimation.promise.then(() => {
+        this.mazeAnimation = null;
+        this.drawer.isComplete = true;
+        this.drawer.useHiddenCtx = !settings.doAnimateGenerating;
+        this.drawer.shouldDraw = true;
+        this.drawer.draw();
+        if (!settings.doAnimateGenerating) this.drawer.animateCanvasCopyFill();
+        this.drawer.useHiddenCtx = false;
       });
-    } else {
-      alg.finish();
-      this.drawer.isComplete = true;
-      this.drawer.useHiddenCtx = true;
-      this.drawer.draw();
-      this.drawer.animateCanvasCopyFill();
-      this.drawer.useHiddenCtx = false;
-    }
-    this.shouldSweep = true;
+      this.shouldSweep = true;
+    });
   }
 
   public async solve(settings: MazeSettings): Promise<void> {
@@ -209,12 +208,12 @@ export class MazeController {
   /**
    * Empties the canvas and stops all animations.
    */
-  public clear(): void {
+  public async clear(): Promise<void> {
+    await this.stopMazeAnimation();
     this.maze = null;
     this.shouldSweep = false;
     this.lastEvent = null;
     this.drawer.mazeEvent = null;
-    this.stopMazeAnimation();
     this.drawer.fillWithWall();
   }
 

@@ -42,6 +42,7 @@ export default class MazeDrawer {
   public path: readonly Readonly<MazeCell>[] | null = null;
   public isComplete: boolean = false;
   public changeList: Readonly<MazeCell>[] = [];
+  public shouldDraw: boolean = true;
 
   /** Dimensions of the maze. */
   private gridSize: Readonly<GridSize>;
@@ -230,7 +231,7 @@ export default class MazeDrawer {
   }
 
   public draw(): void {
-    if (this.maze === null) {
+    if (this.maze === null || !this.shouldDraw) {
       this.ctx.fillStyle = COLOR.empty;
       this.ctx.fillRect(0, 0, this.width, this.height);
       return;
