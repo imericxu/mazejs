@@ -3,12 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --color-slate-50: 210deg 40% 98%;
-    --color-slate-500: 215deg 16% 47%;
-    --color-slate-900: 222deg 47.4% 11.2%;
-  }
-
   input,
   button {
     @apply outline-0 focus-visible:outline-2;
@@ -25,16 +19,16 @@
 
 @mixin glass-tube {
   @apply shadow shadow-slate-400;
-  border: 1px solid hsl(215deg 25% 26.7% / 0.5);
+  border: 1px solid theme("colors.slate.700 / 0.5");
   border-radius: 9999px;
   background-image: linear-gradient(
     to bottom,
-    hsl(var(--color-slate-50) / 0.5),
-    hsl(var(--color-slate-900) / 0.2) 10%,
-    hsl(var(--color-slate-900) / 0.1) 30%,
-    hsl(var(--color-slate-50) / 0.05) 50%,
-    hsl(var(--color-slate-50) / 0.05) 80%,
-    hsl(var(--color-slate-50) / 0.4)
+    theme("colors.slate.50 / 0.5"),
+    theme("colors.slate.900 / 0.2") 10%,
+    theme("colors.slate.900 / 0.1") 30%,
+    theme("colors.slate.50 / 0.05") 50%,
+    theme("colors.slate.50 / 0.05") 80%,
+    theme("colors.slate.50 / 0.4")
   );
   pointer-events: none;
 }
@@ -68,15 +62,15 @@
     &::before {
       position: absolute;
       mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
+        linear-gradient(white 0 0) content-box,
+        linear-gradient(white 0 0);
       mask-composite: exclude;
       inset: 0;
       border-radius: inherit;
       background-image: linear-gradient(
         to bottom right,
-        hsl(var(--color-slate-900) / 0.4),
-        hsl(var(--color-slate-50) / 0.5)
+        theme("colors.slate.900 / 0.4"),
+        theme("colors.slate.50 / 0.5")
       );
       padding: 1px;
       pointer-events: none;
@@ -90,10 +84,10 @@
       border-radius: inherit;
       background-image: linear-gradient(
         to bottom right,
-        hsl(var(--color-slate-50) / 0.2),
-        hsl(var(--color-slate-500) / 0.06) 30%,
-        hsl(var(--color-slate-500) / 0.06) 70%,
-        hsl(var(--color-slate-900) / 0.15)
+        theme("colors.slate.50 / 0.2"),
+        theme("colors.slate.500 / 0.06") 30%,
+        theme("colors.slate.500 / 0.06") 70%,
+        theme("colors.slate.900 / 0.15")
       );
       pointer-events: none;
       content: "";
