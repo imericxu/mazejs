@@ -52,7 +52,7 @@ export default class MazeDrawer {
   /** The canvas rendering context. */
   private visibleCtx: CanvasRenderingContext2D;
   /** The hidden canvas rendering context for offscreen rendering. */
-  private hiddenCtx: OffscreenCanvasRenderingContext2D;
+  private hiddenCtx: CanvasRenderingContext2D;
 
   private sweepAnimations = new Set<AnimationPromise>();
 
@@ -75,12 +75,10 @@ export default class MazeDrawer {
     this.visibleCtx = ctx;
     const hiddenCanvas = document.createElement("canvas");
     this.hiddenCtx = match(
-      hiddenCanvas
-        .transferControlToOffscreen()
-        .getContext("2d", { willReadFrequently: true }),
+      hiddenCanvas.getContext("2d", { willReadFrequently: true }),
     )
       .with(null, () => {
-        throw new Error("Failed to create offscreen canvas.");
+        throw new Error("Failed to get hidden canvas context");
       })
       .otherwise((ctx) => ctx);
     this.gridSize = initialGridSize;
@@ -222,6 +220,7 @@ export default class MazeDrawer {
         drawnWidth = imageWidth;
       },
       () => drawnWidth === this.width,
+      60,
     );
     this.sweepAnimations.add(animation);
     animation.start();
@@ -416,6 +415,7 @@ export default class MazeDrawer {
         drawnWidth = drawWidth;
       },
       () => drawnWidth === this.width,
+      60,
     );
     this.sweepAnimations.add(animation);
     animation.start();
@@ -462,6 +462,7 @@ export default class MazeDrawer {
         drawnWidth = drawWidth2;
       },
       () => drawnWidth === this.width,
+      60,
     );
     this.sweepAnimations.add(animation);
     animation.start();

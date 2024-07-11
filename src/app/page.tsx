@@ -103,7 +103,12 @@ export default function Home(): ReactElement {
           ref={containerRef}
           className="glass-surface mx-auto box-content h-0 w-0 rounded-2xl p-5 transition-all"
         >
-          <canvas ref={canvasRef} className="h-0 w-0 transition-all">
+          <canvas
+            ref={canvasRef}
+            width={1}
+            height={1}
+            className="h-0 w-0 transition-all"
+          >
             Your browser doesn&lsquo;t support HTML Canvas.
           </canvas>
         </div>
