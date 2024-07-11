@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Lato } from "next/font/google";
 import { type ReactElement, type ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
-import "./globals.scss";
+import "./globals.css";
 
 const latoFont = Lato({
   weight: ["300", "400", "700"],

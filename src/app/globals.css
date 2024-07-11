@@ -17,26 +17,22 @@
   }
 }
 
-@mixin glass-tube {
-  @apply shadow shadow-slate-400;
-  border: 1px solid theme("colors.slate.700 / 0.5");
-  border-radius: 9999px;
-  background-image: linear-gradient(
-    to bottom,
-    theme("colors.slate.50 / 0.5"),
-    theme("colors.slate.900 / 0.2") 10%,
-    theme("colors.slate.900 / 0.1") 30%,
-    theme("colors.slate.50 / 0.05") 50%,
-    theme("colors.slate.50 / 0.05") 80%,
-    theme("colors.slate.50 / 0.4")
-  );
-  pointer-events: none;
-}
-
 @layer components {
   /* Standalone glass tubes */
   .glass-tube {
-    @include glass-tube;
+    @apply shadow shadow-slate-400;
+    border: 1px solid theme("colors.slate.700 / 0.5");
+    border-radius: 9999px;
+    background-image: linear-gradient(
+      to bottom,
+      theme("colors.slate.50 / 0.5"),
+      theme("colors.slate.900 / 0.2") 10%,
+      theme("colors.slate.900 / 0.1") 30%,
+      theme("colors.slate.50 / 0.05") 50%,
+      theme("colors.slate.50 / 0.05") 80%,
+      theme("colors.slate.50 / 0.4")
+    );
+    pointer-events: none;
   }
 
   /* Glass-tube container (overlayed on top using pseudo-elements) */
@@ -45,9 +41,21 @@
     border-radius: 9999px;
 
     &::after {
-      @include glass-tube;
+      @apply shadow shadow-slate-400;
       position: absolute;
       inset: 0;
+      border: 1px solid hsl(215deg 25% 26.7% / 0.5);
+      border-radius: 9999px;
+      background-image: linear-gradient(
+        to bottom,
+        theme("colors.slate.50 / 0.5"),
+        theme("colors.slate.900 / 0.2") 10%,
+        theme("colors.slate.900 / 0.1") 30%,
+        theme("colors.slate.50 / 0.05") 50%,
+        theme("colors.slate.50 / 0.05") 80%,
+        theme("colors.slate.50 / 0.4")
+      );
+      pointer-events: none;
       content: "";
     }
   }
