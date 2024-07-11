@@ -156,7 +156,8 @@ export default class MazeDrawer {
     this.fillWithWall();
   }
 
-  public zoomTo(zoomLevel: number): void {
+  public async zoomTo(zoomLevel: number): Promise<void> {
+    await this.waitForSweepAnimations();
     this.zoomLevel = zoomLevel;
     this.updateCanvasSize();
     const redraw = () => {
