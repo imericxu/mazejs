@@ -89,7 +89,9 @@ export class MazeController {
     await this.stopMazeAnimation();
     const algType: Exclude<GenerationAlgorithm, "random"> =
       settings.generationAlgorithm === "random"
-        ? randomFromArray(GENERATION_ALGORITHMS.filter((x) => x !== "random"))
+        ? (randomFromArray(
+            GENERATION_ALGORITHMS.filter((x) => x !== "random"),
+          ) as Exclude<GenerationAlgorithm, "random">)
         : settings.generationAlgorithm;
     const alg: MazeGenerator = match(algType)
       .with("backtracker", () => new Backtracker({ rows, cols }))
@@ -165,7 +167,9 @@ export class MazeController {
     this.drawer.startEnd = [start, end];
     const algType: Exclude<SolveAlgorithm, "random"> =
       settings.solveAlgorithm === "random"
-        ? randomFromArray(SOLVE_ALGORITHMS.filter((x) => x !== "random"))
+        ? (randomFromArray(
+            SOLVE_ALGORITHMS.filter((x) => x !== "random"),
+          ) as Exclude<SolveAlgorithm, "random">)
         : settings.solveAlgorithm;
     const alg: MazeSolver = match(algType)
       .with("bfs", () => new BFS(this.maze!, start, end))
