@@ -100,10 +100,10 @@ export function getIntFromForm(
 }
 
 export function getFloatFromForm(
-  formEvent: Readonly<FormData>,
+  formData: Readonly<FormData>,
   key: string,
 ): number | null {
-  const value = formEvent.get(key);
+  const value = formData.get(key);
   if (value === null) return null;
 
   const floatValue = parseFloat(value.toString());
