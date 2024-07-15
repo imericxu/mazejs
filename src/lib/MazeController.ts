@@ -63,14 +63,9 @@ export class MazeController {
    */
   constructor(
     ctx: CanvasRenderingContext2D,
-    setContainerSize: (size: Readonly<RectSize>) => void,
     private setSolvable: (solvable: boolean) => void,
   ) {
-    this.drawer = new MazeDrawer(
-      ctx,
-      MazeController.DEFAULTS.dimensions,
-      setContainerSize,
-    );
+    this.drawer = new MazeDrawer(ctx, MazeController.DEFAULTS.dimensions);
   }
 
   public async generate(settings: MazeSettings): Promise<void> {

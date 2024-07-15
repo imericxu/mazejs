@@ -3,103 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-primary: 213 97% 87%; /* blue-200 */
+    --color-primary-light: 214 95% 93%; /* blue-100 */
+    --color-secondary: 141 79% 85%; /* green-200 */
+    --color-disabled: 213 27% 84%; /* slate-300 */
+    --color-error: 0 72% 51%; /* red-600 */
+    --color-surface: 210 40% 98%; /* slate-50 */
+    --color-surface-overlay: 210 40% 98% / 0.2; /* slate-50/20 */
+    --color-text: 222 47% 11%; /* slate-900 */
+    --color-text-placeholder: 215 16% 47%; /* slate-500 */
+    --color-text-disabled: 215 25% 27%; /* slate-700 */
+    --color-border: 215 16% 47%; /* slate-500 */
+  }
+
   input,
   button {
     @apply outline-0 focus-visible:outline-2;
   }
 
   input::placeholder {
-    @apply text-slate-500;
+    @apply text-text-placeholder;
   }
 
   button {
     cursor: pointer;
-  }
-}
-
-@layer components {
-  /* Standalone glass tubes */
-  .glass-tube {
-    @apply shadow shadow-slate-400;
-    border: 1px solid theme("colors.slate.700 / 0.5");
-    border-radius: 9999px;
-    background-image: linear-gradient(
-      to bottom,
-      theme("colors.slate.50 / 0.5"),
-      theme("colors.slate.900 / 0.2") 10%,
-      theme("colors.slate.900 / 0.1") 30%,
-      theme("colors.slate.50 / 0.05") 50%,
-      theme("colors.slate.50 / 0.05") 80%,
-      theme("colors.slate.50 / 0.4")
-    );
-    pointer-events: none;
-  }
-
-  /* Glass-tube container (overlayed on top using pseudo-elements) */
-  .glass-tube-container {
-    position: relative;
-    border-radius: 9999px;
-
-    &::after {
-      @apply shadow shadow-slate-400;
-      position: absolute;
-      inset: 0;
-      border: 1px solid hsl(215deg 25% 26.7% / 0.5);
-      border-radius: 9999px;
-      background-image: linear-gradient(
-        to bottom,
-        theme("colors.slate.50 / 0.5"),
-        theme("colors.slate.900 / 0.2") 10%,
-        theme("colors.slate.900 / 0.1") 30%,
-        theme("colors.slate.50 / 0.05") 50%,
-        theme("colors.slate.50 / 0.05") 80%,
-        theme("colors.slate.50 / 0.4")
-      );
-      pointer-events: none;
-      content: "";
-    }
-  }
-
-  /* Make surface look like glass */
-  .glass-surface {
-    @apply shadow shadow-slate-500 backdrop-blur-sm;
-    position: relative;
-    padding: 1px;
-
-    /* Gradient border */
-    &::before {
-      position: absolute;
-      mask:
-        linear-gradient(white 0 0) content-box,
-        linear-gradient(white 0 0);
-      mask-composite: exclude;
-      inset: 0;
-      border-radius: inherit;
-      background-image: linear-gradient(
-        to bottom right,
-        theme("colors.slate.900 / 0.4"),
-        theme("colors.slate.50 / 0.5")
-      );
-      padding: 1px;
-      pointer-events: none;
-      content: "";
-    }
-
-    /* Gradient surface */
-    &::after {
-      position: absolute;
-      inset: 1px;
-      border-radius: inherit;
-      background-image: linear-gradient(
-        to bottom right,
-        theme("colors.slate.50 / 0.2"),
-        theme("colors.slate.500 / 0.06") 30%,
-        theme("colors.slate.500 / 0.06") 70%,
-        theme("colors.slate.900 / 0.15")
-      );
-      pointer-events: none;
-      content: "";
-    }
   }
 }
 

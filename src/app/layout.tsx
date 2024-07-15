@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Lato } from "next/font/google";
+import { Roboto_Slab } from "next/font/google";
 import { type ReactElement, type ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 import "./globals.css";
 
-const latoFont = Lato({
-  weight: ["300", "400", "700"],
+const robotoSlabFont = Roboto_Slab({
+  weight: ["300", "400", "600"],
   subsets: ["latin"],
 });
 
@@ -23,8 +23,8 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={twMerge(
-          latoFont.className,
-          "min-h-full bg-blue-200 bg-gradient-to-b from-blue-100 to-blue-300 bg-fixed text-slate-900",
+          robotoSlabFont.className,
+          "min-h-full bg-primary-light bg-fixed text-text",
         )}
       >
         {children}

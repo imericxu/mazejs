@@ -8,11 +8,11 @@ import { clamp, easeOutQuad, type Direction } from "./utils";
 
 /** Colors used by the renderer. */
 const COLOR = {
-  empty: colors.blue[500],
-  partial: colors.blue[300],
-  solid: colors.blue[50],
+  empty: colors.blue[400],
+  partial: colors.green[200],
+  solid: colors.slate[50],
   path: colors.slate[700],
-  partialPath: "#33415566" /* colors.slate[700] / 40 */,
+  partialPath: colors.slate[700] + "66",
   start: colors.amber[500],
   end: colors.fuchsia[500],
 } as const;
@@ -64,13 +64,10 @@ export default class MazeDrawer {
    * @param ctx - The canvas rendering context. The canvas should have a CSS
    * width as well as a width and height attribute (set to 0 initially).
    * @param initialGridSize - The inital dimensions of the maze.
-   * @param setContainerSize - Callback to set the container size. Has to set
-   * programmatically for CSS transitions to work.
    */
   constructor(
     ctx: CanvasRenderingContext2D,
     initialGridSize: Readonly<GridSize>,
-    private setContainerSize: (size: RectSize) => void,
   ) {
     this.visibleCtx = ctx;
     const hiddenCanvas = document.createElement("canvas");
@@ -150,7 +147,6 @@ export default class MazeDrawer {
     this.gridSize = dims;
     this.cellWallRatio = dims.cellWallRatio;
     this.updateCanvasSize();
-    this.setContainerSize({ width: this.width, height: this.height });
     this.visibleCtx.canvas.style.width = `${this.width}px`;
     this.visibleCtx.canvas.style.height = `${this.height}px`;
     this.fillWithWall();
@@ -168,7 +164,6 @@ export default class MazeDrawer {
       this.isComplete = false;
     };
     redraw();
-    this.setContainerSize({ width: this.width, height: this.height });
     this.visibleCtx.canvas.style.width = `${this.width}px`;
     this.visibleCtx.canvas.style.height = `${this.height}px`;
     redraw();
